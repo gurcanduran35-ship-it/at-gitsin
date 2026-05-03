@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- SEO -->
+  <title>At Gitsin — At Taşımacılığı Platformu</title>
+  <meta name="description" content="At Gitsin, Türkiye'nin at taşımacılığı platformu. Taşıyıcı bul, at gönder. Sesli ilan ver, WhatsApp'a paylaş.">
+  <meta name="keywords" content="at taşımacılığı, at nakli, horse transport, at taşıma, taşıyıcı, at sahibi, at gitsin, hayvan nakli">
+  <meta name="author" content="At Gitsin">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://atgitsin.com">
+
+  <!-- Open Graph (WhatsApp / sosyal medya önizleme) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://atgitsin.com">
+  <meta property="og:title" content="At Gitsin — At Taşımacılığı">
+  <meta property="og:description" content="Atını taşı, aracını doldur. Sesli ilan ver, hemen paylaş. Türkiye'nin at taşımacılığı platformu.">
+  <meta property="og:image" content="https://atgitsin.com/icons/Icon-512.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="At Gitsin — At Taşımacılığı">
+  <meta name="twitter:description" content="Atını taşı, aracını doldur. Sesli ilan ver, hemen paylaş.">
+
+  <!-- PWA / iOS -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="At Gitsin">
+  <meta name="theme-color" content="#1A3A5C">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Structured Data (Google) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "At Gitsin",
+    "url": "https://atgitsin.com",
+    "description": "Türkiye'nin at taşımacılığı platformu. Taşıyıcı bul, at gönder.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Android, iOS, Web",
+    "inLanguage": "tr",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "TRY"
+    }
+  }
+  </script>
+
+  <style>
+    /* Splash ekranı — Flutter yüklenene kadar boş beyaz görünmesini önler */
+    body {
+      margin: 0;
+      background-color: #1A3A5C;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #splash {
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+    }
+    #splash p {
+      font-size: 14px;
+      opacity: 0.6;
+      margin-top: 12px;
+    }
+    #flutter_target { display: none; }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <rect width="80" height="80" rx="16" fill="#F97316"/>
+      <text x="40" y="52" text-anchor="middle" font-size="36" fill="white">🐴</text>
+    </svg>
+    <p>At Gitsin yükleniyor...</p>
+  </div>
+  <div id="flutter_target"></div>
+  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function() {
+      document.getElementById('splash').style.display = 'none';
+    });
+    var _audioCtx = null;
+    function playNotificationBeep() {
+      try {
+        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = _audioCtx;
+        var resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+        resume.then(function() {
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.35, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.8);
+        });
+      } catch(e) {}
+    }
+  </script>
+</body>
+</html>
