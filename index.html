@@ -136,10 +136,21 @@
       return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         .then(function(stream) {
           _agChunks = [];
-          var mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-            ? 'audio/webm;codecs=opus'
-            : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
-          _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+          // iOS Safari: audio/mp4, Chrome/Firefox: audio/webm
+          var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/ogg'];
+          var mimeType = '';
+          for (var i = 0; i < candidates.length; i++) {
+            if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
+              mimeType = candidates[i];
+              break;
+            }
+          }
+          console.log('atGitsin: using mimeType =', mimeType || '(default)');
+          try {
+            _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+          } catch(e) {
+            _agRecorder = new MediaRecorder(stream);
+          }
           _agRecorder.ondataavailable = function(e) {
             if (e.data && e.data.size > 0) _agChunks.push(e.data);
           };
