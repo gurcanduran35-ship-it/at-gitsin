@@ -31547,11 +31547,11 @@ case 1:s="\ud83d\udc34"
 break
 case 2:s="\ud83d\udd04"
 break
-default:s=null}switch(r){case 0:r="TA\u015eIYICI \u0130LANI"
+default:s=null}switch(r){case 0:r="BO\u015e ARA\xc7 \u0130LANI"
 break
-case 1:r="AT SAH\u0130B\u0130 \u0130LANI"
+case 1:r="TA\u015eINACAK AT \u0130LANI"
 break
-case 2:r="DEV\u0130R \u0130LANI"
+case 2:r="BO\u015e YER \u0130LANI"
 break
 default:r=null}r=s+" *AT G\u0130TS\u0130N \u2014 "+r+"*\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"+("\ud83d\udccd G\xfczergah: "+B.b.by(a.c," \u2192 ")+"\n")+("\ud83d\udc34 At Say\u0131s\u0131: "+a.d+"\n")
 if(a.x)r+="\ud83d\udd01 Gidi\u015f-D\xf6n\xfc\u015f\n"
@@ -48347,9 +48347,9 @@ A.a7u.prototype={
 $0(){return B.ig},
 $S:674}
 A.jT.prototype={
-gPH(){switch(this.b.a){case 0:return"TA\u015eIYICI"
-case 1:return"AT SAH\u0130B\u0130"
-case 2:return"DEV\u0130R"}}}
+gPH(){switch(this.b.a){case 0:return"BO\u015e ARA\xc7"
+case 1:return"TA\u015eINACAK AT"
+case 2:return"BO\u015e YER"}}}
 A.afX.prototype={
 $1(a){return a.b===this.a.h(0,"type")},
 $S:675}
@@ -49684,11 +49684,11 @@ case 1:s=B.ab
 break
 case 2:s=B.eT
 break
-default:s=n}switch(l){case 0:l="Ta\u015f\u0131y\u0131c\u0131 \u0130lan\u0131"
+default:s=n}switch(l){case 0:l="Bo\u015f Ara\xe7 \u0130lan\u0131"
 break
-case 1:l="At Sahibi \u0130lan\u0131"
+case 1:l="Ta\u015f\u0131nacak At \u0130lan\u0131"
 break
-case 2:l="Devir \u0130lan\u0131"
+case 2:l="Bo\u015f Yer \u0130lan\u0131"
 break
 default:l=n}r=s.cz(0.08)
 q=A.bN(12)
@@ -49734,7 +49734,7 @@ s=t.p
 n=A.b([n],s)
 if(q.e!=null)n.push(q.aea())
 n.push(new A.S1(o,p))
-return A.hO(B.bI,A.b([new A.Cy(n,new A.wy(B.rD,6,5,14),q.d,p),A.ED(p,new A.IN(q.e,new A.aCq(q),new A.aCr(q),p),p,p,12,12,12,p),A.ED(16,A.br(A.b([A.aOq(B.ab,!1,!0,"At Sahibi \u0130lan\u0131"),B.ea,A.aOq(B.Jv,!1,!0,"Ta\u015f\u0131y\u0131c\u0131 \u0130lan\u0131"),B.ea,A.aOq(B.pH,!0,!1,"Devir \u0130lan\u0131")],s),B.a4,B.l,B.a2,0,B.r),p,p,16,p,p,p)],s),B.B,B.bp,p)},
+return A.hO(B.bI,A.b([new A.Cy(n,new A.wy(B.rD,6,5,14),q.d,p),A.ED(p,new A.IN(q.e,new A.aCq(q),new A.aCr(q),p),p,p,12,12,12,p),A.ED(16,A.br(A.b([A.aOq(B.ab,!1,!0,"Ta\u015f\u0131nacak At"),B.ea,A.aOq(B.Jv,!1,!0,"Bo\u015f Ara\xe7"),B.ea,A.aOq(B.pH,!0,!1,"Bo\u015f Yer")],s),B.a4,B.l,B.a2,0,B.r),p,p,16,p,p,p)],s),B.B,B.bp,p)},
 ae1(a){var s,r,q,p,o,n,m,l,k,j,i,h,g,f=A.b([],t._I),e=this.e,d=e!=null?A.aMW(e):null
 for(e=a.length,s=d!=null,r=0;r<e;++r){q=a[r]
 for(p=q.c,o=p.length,n=0;n<p.length;p.length===o||(0,A.G)(p),++n){m=p[n]
