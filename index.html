@@ -114,53 +114,44 @@
       } catch(e) {}
     }
 
-    // ── At Gitsin Mikrofon (MediaRecorder) ──────────────────
-    // iOS/Android Safari için: Flutter tap'ı async olduğundan getUserMedia
-    // doğrudan native canvas click'e bağlanıyor.
-    var _agMicPermGranted = false;
-    var _agRecorder = null;
-    var _agChunks = [];
+    // ── At Gitsin Mikrofon (AudioContext + ScriptProcessor) ─────────────────
+    // MediaRecorder yerine ham PCM yakalama + WAV encode kullanıyoruz.
+    // Sebep: iOS Safari'de MediaRecorder chunk'ları boş geliyor.
+    // AudioContext tüm modern tarayıcılarda (iOS Safari dahil) güvenilir çalışır.
 
-    // Kullanıcı herhangi bir yere tıkladığında mikrofon iznini önceden iste
+    var _agStream = null;
+    var _agAudioCtx = null;
+    var _agSource = null;
+    var _agProcessor = null;
+    var _agSamples = [];
+
+    // İlk dokunuşta mikrofon iznini önceden iste (iOS Safari user-gesture şartı)
     document.addEventListener('pointerdown', function _agPreGrant() {
-      if (_agMicPermGranted) return;
       navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(function(stream) {
-          stream.getTracks().forEach(function(t) { t.stop(); });
-          _agMicPermGranted = true;
-        })
+        .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
         .catch(function() {});
     }, { once: true });
 
     function atGitsinStartRecording() {
-      return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
         .then(function(stream) {
-          _agChunks = [];
-          // iOS Safari: audio/mp4, Chrome/Firefox: audio/webm
-          var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/ogg'];
-          var mimeType = '';
-          for (var i = 0; i < candidates.length; i++) {
-            if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
-              mimeType = candidates[i];
-              break;
-            }
-          }
-          console.log('atGitsin: using mimeType =', mimeType || '(default)');
+          _agSamples = [];
+          _agStream = stream;
           try {
-            _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+            _agAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
           } catch(e) {
-            _agRecorder = new MediaRecorder(stream);
+            _agAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
           }
-          _agRecorder.ondataavailable = function(e) {
-            if (e.data && e.data.size > 0) {
-              _agChunks.push(e.data);
-              console.log('atGitsin: chunk #' + _agChunks.length + ' size=' + e.data.size);
-            } else {
-              console.warn('atGitsin: empty chunk received');
-            }
+          if (_agAudioCtx.state === 'suspended') _agAudioCtx.resume();
+          _agSource = _agAudioCtx.createMediaStreamSource(stream);
+          _agProcessor = _agAudioCtx.createScriptProcessor(4096, 1, 1);
+          _agProcessor.onaudioprocess = function(e) {
+            var data = e.inputBuffer.getChannelData(0);
+            _agSamples.push(new Float32Array(data));
           };
-          _agRecorder.start();
-          console.log('atGitsin: recording started, state=' + _agRecorder.state);
+          _agSource.connect(_agProcessor);
+          _agProcessor.connect(_agAudioCtx.destination);
+          console.log('atGitsin: AudioContext started, sampleRate=' + _agAudioCtx.sampleRate);
           return true;
         })
         .catch(function(err) { console.warn('atGitsin mic error:', err); return false; });
@@ -168,27 +159,46 @@
 
     function atGitsinStopRecording() {
       return new Promise(function(resolve) {
-        if (!_agRecorder || _agRecorder.state === 'inactive') {
-          console.warn('atGitsin: stop called but recorder is null or inactive');
-          resolve(''); return;
-        }
-        console.log('atGitsin: stopping, state=' + _agRecorder.state + ', chunks so far=' + _agChunks.length);
-        _agRecorder.onstop = function() {
-          console.log('atGitsin: onstop fired, total chunks=' + _agChunks.length);
-          var mime = _agRecorder.mimeType || 'audio/webm';
-          var blob = new Blob(_agChunks, { type: mime });
-          console.log('atGitsin: blob size=' + blob.size + ' type=' + blob.type);
-          if (blob.size === 0) { resolve(''); return; }
-          var reader = new FileReader();
-          reader.onloadend = function() {
-            _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
-            _agRecorder = null;
-            resolve(reader.result || '');
-          };
-          reader.readAsDataURL(blob);
-        };
-        _agRecorder.stop();
+        if (!_agProcessor) { console.warn('atGitsin: processor null'); resolve(''); return; }
+        try { _agProcessor.disconnect(); _agSource.disconnect(); } catch(e) {}
+        if (_agStream) { _agStream.getTracks().forEach(function(t) { t.stop(); }); _agStream = null; }
+        var sr = _agAudioCtx ? _agAudioCtx.sampleRate : 16000;
+        if (_agAudioCtx) { _agAudioCtx.close().catch(function(){}); _agAudioCtx = null; }
+        _agProcessor = null; _agSource = null;
+
+        var total = 0;
+        for (var i = 0; i < _agSamples.length; i++) total += _agSamples[i].length;
+        console.log('atGitsin: samples=' + total + ' sampleRate=' + sr);
+        if (total === 0) { _agSamples = []; resolve(''); return; }
+
+        var flat = new Float32Array(total);
+        var off = 0;
+        for (var i = 0; i < _agSamples.length; i++) { flat.set(_agSamples[i], off); off += _agSamples[i].length; }
+        _agSamples = [];
+
+        var wav = _agEncodeWAV(flat, sr);
+        var blob = new Blob([wav], { type: 'audio/wav' });
+        console.log('atGitsin: wav blob=' + blob.size + ' bytes');
+        var reader = new FileReader();
+        reader.onloadend = function() { resolve(reader.result || ''); };
+        reader.readAsDataURL(blob);
       });
+    }
+
+    function _agEncodeWAV(samples, sr) {
+      var buf = new ArrayBuffer(44 + samples.length * 2);
+      var v = new DataView(buf);
+      function ws(o, s) { for (var i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); }
+      ws(0,'RIFF'); v.setUint32(4, 36+samples.length*2, true); ws(8,'WAVE');
+      ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+      v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+      ws(36,'data'); v.setUint32(40, samples.length*2, true);
+      var o = 44;
+      for (var i=0; i<samples.length; i++) {
+        var s = Math.max(-1, Math.min(1, samples[i]));
+        v.setInt16(o, s < 0 ? s*0x8000 : s*0x7FFF, true); o += 2;
+      }
+      return buf;
     }
   </script>
 </body>
