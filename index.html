@@ -113,6 +113,59 @@
         });
       } catch(e) {}
     }
+
+    // ── At Gitsin Mikrofon (MediaRecorder) ──────────────────
+    // iOS/Android Safari için: Flutter tap'ı async olduğundan getUserMedia
+    // doğrudan native canvas click'e bağlanıyor.
+    var _agMicPermGranted = false;
+    var _agRecorder = null;
+    var _agChunks = [];
+
+    // Kullanıcı herhangi bir yere tıkladığında mikrofon iznini önceden iste
+    document.addEventListener('pointerdown', function _agPreGrant() {
+      if (_agMicPermGranted) return;
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(function(stream) {
+          stream.getTracks().forEach(function(t) { t.stop(); });
+          _agMicPermGranted = true;
+        })
+        .catch(function() {});
+    }, { once: true });
+
+    function atGitsinStartRecording() {
+      return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(function(stream) {
+          _agChunks = [];
+          var mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
+          _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+          _agRecorder.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) _agChunks.push(e.data);
+          };
+          _agRecorder.start(200);
+          return true;
+        })
+        .catch(function(err) { console.warn('atGitsin mic error:', err); return false; });
+    }
+
+    function atGitsinStopRecording() {
+      return new Promise(function(resolve) {
+        if (!_agRecorder || _agRecorder.state === 'inactive') { resolve(''); return; }
+        _agRecorder.onstop = function() {
+          var mime = _agRecorder.mimeType || 'audio/webm';
+          var blob = new Blob(_agChunks, { type: mime });
+          var reader = new FileReader();
+          reader.onloadend = function() {
+            _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
+            _agRecorder = null;
+            resolve(reader.result || '');
+          };
+          reader.readAsDataURL(blob);
+        };
+        _agRecorder.stop();
+      });
+    }
   </script>
 </body>
 </html>
