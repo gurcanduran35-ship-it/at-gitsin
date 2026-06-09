@@ -152,9 +152,15 @@
             _agRecorder = new MediaRecorder(stream);
           }
           _agRecorder.ondataavailable = function(e) {
-            if (e.data && e.data.size > 0) _agChunks.push(e.data);
+            if (e.data && e.data.size > 0) {
+              _agChunks.push(e.data);
+              console.log('atGitsin: chunk #' + _agChunks.length + ' size=' + e.data.size);
+            } else {
+              console.warn('atGitsin: empty chunk received');
+            }
           };
-          _agRecorder.start(200);
+          _agRecorder.start();
+          console.log('atGitsin: recording started, state=' + _agRecorder.state);
           return true;
         })
         .catch(function(err) { console.warn('atGitsin mic error:', err); return false; });
@@ -162,10 +168,17 @@
 
     function atGitsinStopRecording() {
       return new Promise(function(resolve) {
-        if (!_agRecorder || _agRecorder.state === 'inactive') { resolve(''); return; }
+        if (!_agRecorder || _agRecorder.state === 'inactive') {
+          console.warn('atGitsin: stop called but recorder is null or inactive');
+          resolve(''); return;
+        }
+        console.log('atGitsin: stopping, state=' + _agRecorder.state + ', chunks so far=' + _agChunks.length);
         _agRecorder.onstop = function() {
+          console.log('atGitsin: onstop fired, total chunks=' + _agChunks.length);
           var mime = _agRecorder.mimeType || 'audio/webm';
           var blob = new Blob(_agChunks, { type: mime });
+          console.log('atGitsin: blob size=' + blob.size + ' type=' + blob.type);
+          if (blob.size === 0) { resolve(''); return; }
           var reader = new FileReader();
           reader.onloadend = function() {
             _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
