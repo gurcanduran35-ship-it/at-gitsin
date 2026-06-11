@@ -154,7 +154,7 @@
               console.log('atGitsin: chunk ' + _agChunks.length + ' size=' + e.data.size);
             }
           };
-          _agRecorder.start();
+          _agRecorder.start(1000); // 1sn timeslice — iOS'ta veri akışını garantiler
           console.log('atGitsin: started state=' + _agRecorder.state);
           return true;
         })
