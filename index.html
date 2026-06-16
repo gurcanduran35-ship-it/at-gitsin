@@ -130,6 +130,55 @@
         .catch(function() {});
     }, { once: true });
 
+    // ── Web Speech API (Chrome/Edge/Android) ────────────────────────────────
+    var _agSpeechRecognition = null;
+
+    function atGitsinHasSpeechApi() {
+      return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    }
+
+    function atGitsinStartSpeech() {
+      return new Promise(function(resolve) {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { resolve(null); return; }
+        _agSpeechRecognition = new SR();
+        _agSpeechRecognition.lang = 'tr-TR';
+        _agSpeechRecognition.continuous = false;
+        _agSpeechRecognition.interimResults = false;
+        _agSpeechRecognition.maxAlternatives = 3;
+        var resolved = false;
+        function done(text) {
+          if (!resolved) {
+            resolved = true;
+            _agSpeechRecognition = null;
+            resolve(text && text.trim().length > 0 ? text.trim() : null);
+          }
+        }
+        _agSpeechRecognition.onresult = function(e) {
+          var parts = [];
+          for (var i = 0; i < e.results.length; i++) {
+            parts.push(e.results[i][0].transcript);
+          }
+          done(parts.join(' '));
+        };
+        _agSpeechRecognition.onerror = function(e) {
+          console.warn('SpeechRecognition error:', e.error);
+          done(null);
+        };
+        _agSpeechRecognition.onend = function() { done(null); };
+        try { _agSpeechRecognition.start(); }
+        catch(e) { console.warn('SR start error:', e); done(null); }
+      });
+    }
+
+    function atGitsinStopSpeech() {
+      if (_agSpeechRecognition) {
+        try { _agSpeechRecognition.stop(); } catch(e) {}
+        _agSpeechRecognition = null;
+      }
+    }
+
+    // ── MediaRecorder + Whisper (iOS Safari fallback) ────────────────────────
     function atGitsinStartRecording() {
       return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         .then(function(stream) {
