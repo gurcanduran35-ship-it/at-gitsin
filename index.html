@@ -178,6 +178,20 @@
       }
     }
 
+    // ── GPS Konum ────────────────────────────────────────────────────────────
+    function atGitsinGetPosition() {
+      return new Promise(function(resolve) {
+        if (!navigator.geolocation) { resolve(null); return; }
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          },
+          function() { resolve(null); },
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+        );
+      });
+    }
+
     // ── MediaRecorder + Whisper (iOS Safari fallback) ────────────────────────
     function atGitsinStartRecording() {
       return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
