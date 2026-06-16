@@ -178,6 +178,25 @@
       }
     }
 
+    // ── PWA Kurulum ──────────────────────────────────────────────────────────
+    var _pwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      _pwaPrompt = e;
+    });
+    function atGitsinCanInstall() { return _pwaPrompt !== null; }
+    function atGitsinShowInstall() {
+      if (!_pwaPrompt) return;
+      _pwaPrompt.prompt();
+      _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+    }
+    function atGitsinIsIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+    function atGitsinIsStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
     // ── GPS Konum ────────────────────────────────────────────────────────────
     function atGitsinGetPosition() {
       return new Promise(function(resolve) {
