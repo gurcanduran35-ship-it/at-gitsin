@@ -233,11 +233,38 @@
     // ── At Gitsin Mikrofon (MediaRecorder) ───────────────────────────────────
     var _agRecorder = null;
     var _agChunks = [];
+    var _agLastError = '';
+
+    // iOS: window-level click capture — getUserMedia must be in a native event handler on iOS
+    var _agArmMicCapture = false;
+    var _agMicStreamPromise = null;
+    var _agMicStream = null;
+    window.addEventListener('click', function() {
+      if (!_agArmMicCapture) return;
+      _agArmMicCapture = false;
+      if (_agMicStreamPromise || _agMicStream) return;
+      _agMicStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(function(s) { _agMicStream = s; return s; })
+        .catch(function(err) {
+          _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
+          _agMicStreamPromise = null;
+        });
+    }, { capture: true });
+
+    function atGitsinArmMicCapture() {
+      _agArmMicCapture = true;
+      _agMicStreamPromise = null;
+      _agMicStream = null;
+    }
+    function atGitsinGetLastError() { return _agLastError; }
 
     // ── Web Speech API (Chrome/Edge/Android) ────────────────────────────────
     var _agSpeechRecognition = null;
 
     function atGitsinHasSpeechApi() {
+      // iOS has webkitSpeechRecognition since iOS 16 but it's unreliable in PWA mode
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) return false;
       return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
     }
 
@@ -310,26 +337,39 @@
 
     // ── MediaRecorder + Whisper (iOS Safari fallback) ────────────────────────
     function atGitsinStartRecording() {
-      return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(function(stream) {
-          _agChunks = [];
-          var candidates = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
-          var mimeType = '';
-          for (var i = 0; i < candidates.length; i++) {
-            if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
-              mimeType = candidates[i]; break;
-            }
+      // iOS: use pre-obtained stream from window-level click capture
+      var getStream;
+      if (_agMicStream) {
+        var s = _agMicStream; _agMicStream = null;
+        getStream = Promise.resolve(s);
+      } else if (_agMicStreamPromise) {
+        getStream = _agMicStreamPromise; _agMicStreamPromise = null;
+      } else {
+        getStream = navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      }
+      return getStream.then(function(stream) {
+        if (!stream) return false;
+        _agChunks = [];
+        var candidates = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+        var mimeType = '';
+        for (var i = 0; i < candidates.length; i++) {
+          if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
+            mimeType = candidates[i]; break;
           }
-          try {
-            _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
-          } catch(e) { _agRecorder = new MediaRecorder(stream); }
-          _agRecorder.ondataavailable = function(e) {
-            if (e.data && e.data.size > 0) _agChunks.push(e.data);
-          };
-          _agRecorder.start(1000);
-          return true;
-        })
-        .catch(function(err) { console.warn('atGitsin mic error:', err); return false; });
+        }
+        try {
+          _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+        } catch(e) { _agRecorder = new MediaRecorder(stream); }
+        _agRecorder.ondataavailable = function(e) {
+          if (e.data && e.data.size > 0) _agChunks.push(e.data);
+        };
+        _agRecorder.start(1000);
+        return true;
+      }).catch(function(err) {
+        _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
+        console.warn('atGitsin mic error:', err);
+        return false;
+      });
     }
 
     function atGitsinStopRecording() {
