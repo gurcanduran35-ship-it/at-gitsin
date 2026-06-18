@@ -376,20 +376,18 @@
       return new Promise(function(resolve) {
         if (!_agRecorder || _agRecorder.state === 'inactive') { resolve(''); return; }
         _agRecorder.onstop = function() {
-          var mime = _agRecorder.mimeType || 'audio/mp4';
-          var blob = new Blob(_agChunks, { type: mime });
-          if (blob.size === 0) {
-            _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
+          // iOS Safari: ondataavailable bazen onstop'tan sonra geliyor, 200ms bekle
+          var rec = _agRecorder;
+          setTimeout(function() {
+            var mime = rec.mimeType || 'audio/mp4';
+            var blob = new Blob(_agChunks, { type: mime });
+            rec.stream.getTracks().forEach(function(t) { t.stop(); });
             _agRecorder = null;
-            resolve(''); return;
-          }
-          var reader = new FileReader();
-          reader.onloadend = function() {
-            _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
-            _agRecorder = null;
-            resolve(reader.result || '');
-          };
-          reader.readAsDataURL(blob);
+            if (blob.size === 0) { resolve(''); return; }
+            var reader = new FileReader();
+            reader.onloadend = function() { resolve(reader.result || ''); };
+            reader.readAsDataURL(blob);
+          }, 200);
         };
         try { if (_agRecorder.state === 'recording') _agRecorder.requestData(); } catch(e) {}
         setTimeout(function() {
