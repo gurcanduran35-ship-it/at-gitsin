@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://atgitsin.com.tr/sitemap.xml

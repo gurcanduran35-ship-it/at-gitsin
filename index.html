@@ -5,27 +5,53 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <!-- SEO -->
-  <title>At Gitsin — At Taşımacılığı Platformu</title>
-  <meta name="description" content="At Gitsin, Türkiye'nin at taşımacılığı platformu. Taşıyıcı bul, at gönder. Sesli ilan ver, WhatsApp'a paylaş.">
-  <meta name="keywords" content="at taşımacılığı, at nakli, horse transport, at taşıma, taşıyıcı, at sahibi, at gitsin, hayvan nakli">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ── Google Analytics 4 ──────────────────────────────────────────────── -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9ZHTQK7TY7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9ZHTQK7TY7');
+  </script>
+
+  <!-- ── SEO ────────────────────────────────────────────────────────────── -->
+  <title>At Gitsin — At Taşımacılığı Platformu | Türkiye Geneli Taşıyıcı Bul</title>
+  <meta name="description" content="At Gitsin ile Türkiye'nin her yerinde güvenli at taşımacılığı. Sesli ilan ver, anında taşıyıcı bul. Panelvan, kamyonet, kamyon ve tır ile at nakli. Ücretsiz, WhatsApp entegrasyonlu.">
+  <meta name="keywords" content="at taşımacılığı, at nakli, at taşıma, horse transport, taşıyıcı bul, at nakil aracı, at gitsin, hayvan nakli, at kamyonu, Türkiye at taşıma, atgitsin">
   <meta name="author" content="At Gitsin">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <link rel="canonical" href="https://atgitsin.com.tr">
 
-  <!-- Open Graph (WhatsApp / sosyal medya önizleme) -->
+  <!-- ── GEO ────────────────────────────────────────────────────────────── -->
+  <meta name="geo.region" content="TR">
+  <meta name="geo.placename" content="Türkiye">
+  <meta name="geo.position" content="39.0;35.0">
+  <meta name="ICBM" content="39.0, 35.0">
+  <meta name="language" content="tr">
+  <link rel="alternate" hreflang="tr" href="https://atgitsin.com.tr">
+  <link rel="alternate" hreflang="x-default" href="https://atgitsin.com.tr">
+
+  <!-- ── Open Graph ─────────────────────────────────────────────────────── -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://atgitsin.com.tr">
-  <meta property="og:title" content="At Gitsin — At Taşımacılığı">
-  <meta property="og:description" content="Atını taşı, aracını doldur. Sesli ilan ver, hemen paylaş. Türkiye'nin at taşımacılığı platformu.">
+  <meta property="og:title" content="At Gitsin — Türkiye'nin At Taşımacılığı Platformu">
+  <meta property="og:description" content="Atını taşıt, aracını doldur. Sesli ilan ver, anında taşıyıcı bul. Türkiye genelinde ücretsiz at nakli platformu.">
   <meta property="og:image" content="https://atgitsin.com.tr/icons/Icon-512.png">
+  <meta property="og:image:alt" content="At Gitsin — At Taşımacılığı Platformu">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:site_name" content="At Gitsin">
+  <meta property="og:locale" content="tr_TR">
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
+  <!-- ── Twitter Card ───────────────────────────────────────────────────── -->
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="At Gitsin — At Taşımacılığı">
-  <meta name="twitter:description" content="Atını taşı, aracını doldur. Sesli ilan ver, hemen paylaş.">
+  <meta name="twitter:description" content="Atını taşıt, aracını doldur. Sesli ilan ver, anında taşıyıcı bul. Türkiye'nin at taşımacılığı platformu.">
+  <meta name="twitter:image" content="https://atgitsin.com.tr/icons/Icon-512.png">
 
-  <!-- PWA / iOS -->
+  <!-- ── PWA / iOS ──────────────────────────────────────────────────────── -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,36 +60,121 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
 
-  <!-- Favicon -->
+  <!-- ── Favicon ────────────────────────────────────────────────────────── -->
   <link rel="icon" type="image/png" href="favicon.png"/>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Kritik kaynakları önceden yükle -->
+  <!-- ── Kritik kaynaklar ───────────────────────────────────────────────── -->
   <link rel="preload" href="main.dart.js" as="script" crossorigin>
   <link rel="preload" href="flutter_bootstrap.js" as="script" crossorigin>
   <link rel="dns-prefetch" href="https://nfkaqklfjjapswwsaghz.supabase.co">
+  <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
 
-  <!-- Structured Data (Google) -->
+  <!-- ── JSON-LD: WebApplication ────────────────────────────────────────── -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "At Gitsin",
     "url": "https://atgitsin.com.tr",
-    "description": "Türkiye'nin at taşımacılığı platformu. Taşıyıcı bul, at gönder.",
+    "description": "Türkiye'nin at taşımacılığı platformu. Sesli ilan ver, taşıyıcı bul, at gönder.",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Android, iOS, Web",
     "inLanguage": "tr",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "TRY"
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" },
+    "publisher": {
+      "@type": "Organization",
+      "name": "At Gitsin",
+      "url": "https://atgitsin.com.tr",
+      "logo": { "@type": "ImageObject", "url": "https://atgitsin.com.tr/icons/Icon-512.png" }
     }
   }
   </script>
 
+  <!-- ── JSON-LD: Service ───────────────────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "At Taşımacılığı",
+    "serviceType": "Hayvan Taşımacılığı",
+    "provider": { "@type": "Organization", "name": "At Gitsin", "url": "https://atgitsin.com.tr" },
+    "areaServed": { "@type": "Country", "name": "Türkiye" },
+    "description": "Türkiye genelinde at, pony ve hayvan taşımacılığı için taşıyıcı ve at sahibini buluşturan ücretsiz platform.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "TRY",
+      "description": "Platform ücretsizdir. Taşıyıcı ve at sahibi doğrudan anlaşır."
+    },
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceUrl": "https://atgitsin.com.tr",
+      "availableLanguage": "Turkish"
+    }
+  }
+  </script>
+
+  <!-- ── JSON-LD: FAQPage (AEO) ─────────────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "At taşımacılığı nasıl yapılır?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin uygulamasında sesli veya yazılı ilan vererek anında taşıyıcı bulabilirsiniz. 'İzmir'den Ankara'ya 2 at taşınacak' gibi sesli komutla saniyeler içinde ilan oluşturulur. Taşıyıcılar WhatsApp üzerinden iletişime geçer."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "At nakli ne kadar tutar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin platformu tamamen ücretsizdir. At sahipleri ve taşıyıcılar WhatsApp üzerinden doğrudan iletişime geçerek fiyat belirler. Platform komisyon almaz."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hangi şehirlerde at taşıma hizmeti bulunur?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin, Türkiye'nin tüm 81 ilinde ve yüzlerce ilçesinde hizmet vermektedir. İstanbul, Ankara, İzmir, Bursa, Antalya, Konya, Adana, Kayseri başta olmak üzere tüm Türkiye'de taşıyıcı bulmak mümkündür."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "At taşıma aracı nasıl bulunur?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin haritasından bölgenizdeki boş araçları canlı olarak görebilirsiniz. Sesli komutla ilan verin ya da ilan listesinden uygun taşıyıcıyla doğrudan WhatsApp'tan iletişime geçin."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "At nakli için hangi araç tipleri kullanılır?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin'de panelvan, kamyonet, kamyon ve tır ile 2 box'lı, 3 box'lı, 4 box'lı ve çoklu box araçlar hizmet vermektedir. Araç içi kamera seçeneği de mevcuttur."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "At Gitsin uygulaması nasıl indirilir?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At Gitsin bir PWA (Progressive Web App) olup uygulama mağazasına gerek yoktur. atgitsin.com.tr adresini ziyaret edin: Android ve masaüstünde 'Uygulamayı Yükle', iPhone'da Safari'den Paylaş → 'Ana Ekrana Ekle' seçeneğiyle uygulama simgesi oluşturabilirsiniz."
+        }
+      }
+    ]
+  }
+  </script>
+
   <style>
-    /* Splash ekranı — Flutter yüklenene kadar boş beyaz görünmesini önler */
     body {
       margin: 0;
       background-color: #1A3A5C;
@@ -123,7 +234,6 @@
     var _agRecorder = null;
     var _agChunks = [];
 
-    // iOS Safari: ilk dokunuşta mikrofon iznini önceden al
     document.addEventListener('pointerdown', function() {
       navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
@@ -156,15 +266,10 @@
         }
         _agSpeechRecognition.onresult = function(e) {
           var parts = [];
-          for (var i = 0; i < e.results.length; i++) {
-            parts.push(e.results[i][0].transcript);
-          }
+          for (var i = 0; i < e.results.length; i++) parts.push(e.results[i][0].transcript);
           done(parts.join(' '));
         };
-        _agSpeechRecognition.onerror = function(e) {
-          console.warn('SpeechRecognition error:', e.error);
-          done(null);
-        };
+        _agSpeechRecognition.onerror = function(e) { console.warn('SR error:', e.error); done(null); };
         _agSpeechRecognition.onend = function() { done(null); };
         try { _agSpeechRecognition.start(); }
         catch(e) { console.warn('SR start error:', e); done(null); }
@@ -202,9 +307,7 @@
       return new Promise(function(resolve) {
         if (!navigator.geolocation) { resolve(null); return; }
         navigator.geolocation.getCurrentPosition(
-          function(pos) {
-            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          },
+          function(pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
           function() { resolve(null); },
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
         );
@@ -216,7 +319,6 @@
       return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         .then(function(stream) {
           _agChunks = [];
-          // iOS Safari mp4 önce, sonra webm (Chrome/Firefox)
           var candidates = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
           var mimeType = '';
           for (var i = 0; i < candidates.length; i++) {
@@ -224,20 +326,13 @@
               mimeType = candidates[i]; break;
             }
           }
-          console.log('atGitsin: mimeType=' + (mimeType || 'default'));
           try {
             _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
-          } catch(e) {
-            _agRecorder = new MediaRecorder(stream);
-          }
+          } catch(e) { _agRecorder = new MediaRecorder(stream); }
           _agRecorder.ondataavailable = function(e) {
-            if (e.data && e.data.size > 0) {
-              _agChunks.push(e.data);
-              console.log('atGitsin: chunk ' + _agChunks.length + ' size=' + e.data.size);
-            }
+            if (e.data && e.data.size > 0) _agChunks.push(e.data);
           };
-          _agRecorder.start(1000); // 1sn timeslice — iOS'ta veri akışını garantiler
-          console.log('atGitsin: started state=' + _agRecorder.state);
+          _agRecorder.start(1000);
           return true;
         })
         .catch(function(err) { console.warn('atGitsin mic error:', err); return false; });
@@ -245,15 +340,10 @@
 
     function atGitsinStopRecording() {
       return new Promise(function(resolve) {
-        if (!_agRecorder || _agRecorder.state === 'inactive') {
-          console.warn('atGitsin: recorder null or inactive');
-          resolve(''); return;
-        }
+        if (!_agRecorder || _agRecorder.state === 'inactive') { resolve(''); return; }
         _agRecorder.onstop = function() {
-          console.log('atGitsin: onstop chunks=' + _agChunks.length);
           var mime = _agRecorder.mimeType || 'audio/mp4';
           var blob = new Blob(_agChunks, { type: mime });
-          console.log('atGitsin: blob size=' + blob.size + ' type=' + blob.type);
           if (blob.size === 0) {
             _agRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
             _agRecorder = null;
@@ -267,7 +357,6 @@
           };
           reader.readAsDataURL(blob);
         };
-        // iOS: requestData() ses verisini flush eder, sonra stop
         try { if (_agRecorder.state === 'recording') _agRecorder.requestData(); } catch(e) {}
         setTimeout(function() {
           try { _agRecorder.stop(); } catch(e) { resolve(''); }
