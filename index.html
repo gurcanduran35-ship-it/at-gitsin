@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <base href="/">
+  <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -205,6 +205,13 @@
     <p>At Gitsin yükleniyor...</p>
   </div>
   <div id="flutter_target"></div>
+  <div id="ag-ios-rec" style="display:none; position:fixed; inset:0; background:rgba(13,51,32,0.97); z-index:2147483647; flex-direction:column; align-items:center; justify-content:center; gap:16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent;">
+    <p style="color:rgba(255,255,255,0.45); font-size:10px; letter-spacing:2px; text-transform:uppercase; margin:0;">AT GİTSİN — Sesli İlan</p>
+    <p style="color:rgba(255,255,255,0.65); font-size:13px; text-align:center; margin:0 32px; line-height:1.6; font-style:italic;">"İzmir'den İstanbul'a yarın 2 at gidecek"</p>
+    <p id="ag-ios-status" style="color:white; font-size:16px; font-weight:600; text-align:center; margin:0 24px; line-height:1.5;">Mikrofona bas ve konuş</p>
+    <button id="ag-ios-mic" onclick="atGitsinIOSTap()" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
+    <button onclick="atGitsinIOSCancel()" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
   <script>
     window.addEventListener('flutter-first-frame', function() {
@@ -230,32 +237,9 @@
       } catch(e) {}
     }
 
-    // ── At Gitsin Mikrofon (MediaRecorder) ───────────────────────────────────
-    var _agRecorder = null;
-    var _agChunks = [];
+    // ── At Gitsin Mikrofon ────────────────────────────────────────────────────
     var _agLastError = '';
 
-    // iOS: window-level click capture — getUserMedia must be in a native event handler on iOS
-    var _agArmMicCapture = false;
-    var _agMicStreamPromise = null;
-    var _agMicStream = null;
-    window.addEventListener('click', function() {
-      if (!_agArmMicCapture) return;
-      _agArmMicCapture = false;
-      if (_agMicStreamPromise || _agMicStream) return;
-      _agMicStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(function(s) { _agMicStream = s; return s; })
-        .catch(function(err) {
-          _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
-          _agMicStreamPromise = null;
-        });
-    }, { capture: true });
-
-    function atGitsinArmMicCapture() {
-      _agArmMicCapture = true;
-      _agMicStreamPromise = null;
-      _agMicStream = null;
-    }
     function atGitsinGetLastError() { return _agLastError; }
 
     // ── Web Speech API (Chrome/Edge/Android) ────────────────────────────────
@@ -335,65 +319,113 @@
       });
     }
 
-    // ── MediaRecorder + Whisper (iOS Safari fallback) ────────────────────────
-    function atGitsinStartRecording() {
-      // iOS: use pre-obtained stream from window-level click capture
-      var getStream;
-      if (_agMicStream) {
-        var s = _agMicStream; _agMicStream = null;
-        getStream = Promise.resolve(s);
-      } else if (_agMicStreamPromise) {
-        getStream = _agMicStreamPromise; _agMicStreamPromise = null;
-      } else {
-        getStream = navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      }
-      return getStream.then(function(stream) {
-        if (!stream) return false;
-        _agChunks = [];
-        var candidates = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
-        var mimeType = '';
-        for (var i = 0; i < candidates.length; i++) {
-          if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
-            mimeType = candidates[i]; break;
-          }
-        }
-        try {
-          _agRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
-        } catch(e) { _agRecorder = new MediaRecorder(stream); }
-        _agRecorder.ondataavailable = function(e) {
-          if (e.data && e.data.size > 0) _agChunks.push(e.data);
-        };
-        _agRecorder.start(1000);
-        return true;
-      }).catch(function(err) {
-        _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
-        console.warn('atGitsin mic error:', err);
-        return false;
+    // ── iOS Native Recording Overlay ─────────────────────────────────────────
+    var _agIOSResolve = null;
+    var _agIOSRec = null;
+    var _agIOSChunks = [];
+    var _agIOSActive = false;
+    var _agIOSTimer = null;
+    var _agIOSSecs = 0;
+
+    function atGitsinShowIOSOverlay() {
+      return new Promise(function(resolve) {
+        _agIOSResolve = resolve;
+        _agIOSActive = false;
+        _agIOSChunks = [];
+        _agIOSRec = null;
+        document.getElementById('ag-ios-status').textContent = 'Mikrofona bas ve konuş';
+        document.getElementById('ag-ios-mic').textContent = '🎤';
+        document.getElementById('ag-ios-mic').style.background = '#E67E22';
+        document.getElementById('ag-ios-mic').disabled = false;
+        document.getElementById('ag-ios-rec').style.display = 'flex';
       });
     }
 
-    function atGitsinStopRecording() {
-      return new Promise(function(resolve) {
-        if (!_agRecorder || _agRecorder.state === 'inactive') { resolve(''); return; }
-        _agRecorder.onstop = function() {
-          // iOS Safari: ondataavailable bazen onstop'tan sonra geliyor, 200ms bekle
-          var rec = _agRecorder;
-          setTimeout(function() {
-            var mime = rec.mimeType || 'audio/mp4';
-            var blob = new Blob(_agChunks, { type: mime });
-            rec.stream.getTracks().forEach(function(t) { t.stop(); });
-            _agRecorder = null;
-            if (blob.size === 0) { resolve(''); return; }
-            var reader = new FileReader();
-            reader.onloadend = function() { resolve(reader.result || ''); };
-            reader.readAsDataURL(blob);
-          }, 200);
-        };
-        try { if (_agRecorder.state === 'recording') _agRecorder.requestData(); } catch(e) {}
-        setTimeout(function() {
-          try { _agRecorder.stop(); } catch(e) { resolve(''); }
-        }, 100);
-      });
+    function atGitsinIOSTap() {
+      if (_agIOSActive) {
+        _agIOSActive = false;
+        if (_agIOSTimer) { clearInterval(_agIOSTimer); _agIOSTimer = null; }
+        document.getElementById('ag-ios-status').textContent = 'İşleniyor...';
+        document.getElementById('ag-ios-mic').textContent = '⏳';
+        document.getElementById('ag-ios-mic').disabled = true;
+        if (_agIOSRec && _agIOSRec.state !== 'inactive') {
+          try { _agIOSRec.requestData(); } catch(e) {}
+          setTimeout(function() { try { _agIOSRec.stop(); } catch(e) {} }, 150);
+        }
+        return;
+      }
+      // Start — this onclick is a trusted gesture on iOS Safari
+      document.getElementById('ag-ios-status').textContent = 'Mikrofon izni isteniyor...';
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(function(stream) {
+          _agIOSChunks = [];
+          var candidates = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+          var mimeType = '';
+          for (var i = 0; i < candidates.length; i++) {
+            if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
+              mimeType = candidates[i]; break;
+            }
+          }
+          try {
+            _agIOSRec = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+          } catch(e) { _agIOSRec = new MediaRecorder(stream); }
+          _agIOSRec.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) _agIOSChunks.push(e.data);
+          };
+          _agIOSRec.onstop = function() {
+            var rec = _agIOSRec;
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            setTimeout(function() {
+              var mime = rec && rec.mimeType ? rec.mimeType : 'audio/mp4';
+              var blob = new Blob(_agIOSChunks, { type: mime });
+              _agIOSRec = null;
+              document.getElementById('ag-ios-rec').style.display = 'none';
+              if (blob.size === 0) {
+                if (_agIOSResolve) { _agIOSResolve(''); _agIOSResolve = null; }
+                return;
+              }
+              var reader = new FileReader();
+              reader.onloadend = function() {
+                if (_agIOSResolve) { _agIOSResolve(reader.result || ''); _agIOSResolve = null; }
+              };
+              reader.readAsDataURL(blob);
+            }, 250);
+          };
+          _agIOSRec.start();
+          _agIOSActive = true;
+          document.getElementById('ag-ios-mic').textContent = '⏹';
+          document.getElementById('ag-ios-mic').style.background = '#C0392B';
+          _agIOSSecs = 20;
+          document.getElementById('ag-ios-status').textContent = 'Konuş… ' + _agIOSSecs + 's — durdurmak için tekrar bas';
+          _agIOSTimer = setInterval(function() {
+            _agIOSSecs--;
+            if (_agIOSSecs <= 0) {
+              clearInterval(_agIOSTimer); _agIOSTimer = null;
+              if (_agIOSActive) atGitsinIOSTap();
+            } else {
+              document.getElementById('ag-ios-status').textContent = 'Konuş… ' + _agIOSSecs + 's — durdurmak için tekrar bas';
+            }
+          }, 1000);
+        })
+        .catch(function(err) {
+          _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
+          document.getElementById('ag-ios-status').textContent = 'Mikrofon izni gerekli — tarayıcı ayarlarından izin ver';
+        });
+    }
+
+    function atGitsinIOSCancel() {
+      _agIOSActive = false;
+      if (_agIOSTimer) { clearInterval(_agIOSTimer); _agIOSTimer = null; }
+      if (_agIOSRec && _agIOSRec.state !== 'inactive') {
+        _agIOSChunks = [];
+        try {
+          if (_agIOSRec.stream) _agIOSRec.stream.getTracks().forEach(function(t) { t.stop(); });
+          _agIOSRec.stop();
+        } catch(e) {}
+      }
+      _agIOSRec = null;
+      document.getElementById('ag-ios-rec').style.display = 'none';
+      if (_agIOSResolve) { _agIOSResolve(''); _agIOSResolve = null; }
     }
   </script>
 </body>
