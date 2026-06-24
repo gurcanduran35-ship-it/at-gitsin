@@ -409,7 +409,14 @@
         })
         .catch(function(err) {
           _agLastError = err && err.name ? (err.name + ': ' + err.message) : String(err);
-          document.getElementById('ag-ios-status').textContent = 'Mikrofon izni gerekli — tarayıcı ayarlarından izin ver';
+          var micBtn = document.getElementById('ag-ios-mic');
+          micBtn.textContent = '🔄';
+          micBtn.style.background = '#636e72';
+          micBtn.disabled = false;
+          _agIOSActive = false;
+          document.getElementById('ag-ios-status').innerHTML =
+            '<span style="font-size:15px">📱 iPhone Ayarlar → <b>Safari</b><br>→ <b>Mikrofon</b> → İzin Ver</span><br>' +
+            '<span style="font-size:13px;opacity:0.7">Sonra 🔄 butonuna bas</span>';
         });
     }
 
