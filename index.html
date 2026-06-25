@@ -380,7 +380,7 @@
               var blob = new Blob(_agIOSChunks, { type: mime });
               _agIOSRec = null;
               document.getElementById('ag-ios-rec').style.display = 'none';
-              if (blob.size === 0) {
+              if (blob.size < 1000) {
                 if (_agIOSResolve) { _agIOSResolve(''); _agIOSResolve = null; }
                 return;
               }
@@ -389,9 +389,9 @@
                 if (_agIOSResolve) { _agIOSResolve(reader.result || ''); _agIOSResolve = null; }
               };
               reader.readAsDataURL(blob);
-            }, 250);
+            }, 500);
           };
-          _agIOSRec.start();
+          _agIOSRec.start(100);
           _agIOSActive = true;
           document.getElementById('ag-ios-mic').textContent = '⏹';
           document.getElementById('ag-ios-mic').style.background = '#C0392B';
