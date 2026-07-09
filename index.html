@@ -379,13 +379,23 @@
       }
 
       // ── BAŞLAT — bu onclick iOS Safari'de trusted gesture ─────────────
+      // AudioContext iOS'ta MUTLAKA user gesture içinde (senkron) yaratılmalı.
+      // getUserMedia().then() asenkron olduğu için burada yaratıyoruz.
+      try {
+        _agIOSAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        _agIOSSR = _agIOSAudioCtx.sampleRate;
+        if (_agIOSAudioCtx.state === 'suspended') _agIOSAudioCtx.resume();
+      } catch(e) { _agIOSAudioCtx = null; }
+
       document.getElementById('ag-ios-status').textContent = 'Mikrofon izni isteniyor...';
       navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false }, video: false })
         .then(function(stream) {
           _agIOSStream = stream;
           _agIOSPCMBufs = [];
-          _agIOSAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          _agIOSSR = _agIOSAudioCtx.sampleRate;
+          if (!_agIOSAudioCtx) {
+            _agIOSAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            _agIOSSR = _agIOSAudioCtx.sampleRate;
+          }
           var source = _agIOSAudioCtx.createMediaStreamSource(stream);
           _agIOSProcessor = _agIOSAudioCtx.createScriptProcessor(4096, 1, 1);
           _agIOSProcessor.onaudioprocess = function(e) {
