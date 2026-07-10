@@ -209,11 +209,46 @@
     <p style="color:rgba(255,255,255,0.45); font-size:10px; letter-spacing:2px; text-transform:uppercase; margin:0;">AT GİTSİN — Sesli İlan</p>
     <p style="color:rgba(255,255,255,0.65); font-size:13px; text-align:center; margin:0 32px; line-height:1.6; font-style:italic;">"İzmir'den İstanbul'a yarın 2 at gidecek"</p>
     <p id="ag-ios-status" style="color:white; font-size:16px; font-weight:600; text-align:center; margin:0 24px; line-height:1.5;">Mikrofona bas ve konuş</p>
-    <button id="ag-ios-mic" onclick="atGitsinIOSTap()" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
-    <button onclick="atGitsinIOSCancel()" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
+    <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
+    <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
   <script src="flutter_bootstrap.js" async></script>
   <script>
+    // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
+    // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
+    // önce kayıt olur. capture:true ile touchstart/touchend'i Flutter görmeden yaklarız.
+    (function() {
+      function _agOverlayVisible() {
+        var ov = document.getElementById('ag-ios-rec');
+        return ov && ov.style.display !== 'none';
+      }
+      document.addEventListener('touchstart', function(e) {
+        if (!_agOverlayVisible()) return;
+        var ov = document.getElementById('ag-ios-rec');
+        if (ov.contains(e.target)) e.stopPropagation();
+      }, true);
+      document.addEventListener('touchend', function(e) {
+        if (!_agOverlayVisible()) return;
+        var ov = document.getElementById('ag-ios-rec');
+        if (!ov.contains(e.target)) return;
+        e.stopPropagation();
+        var mic = document.getElementById('ag-ios-mic');
+        var can = document.getElementById('ag-ios-cancel');
+        if (mic && (e.target === mic || mic.contains(e.target)) && !mic.disabled) {
+          e.preventDefault();
+          atGitsinIOSTap();
+        } else if (can && (e.target === can || can.contains(e.target))) {
+          e.preventDefault();
+          atGitsinIOSCancel();
+        }
+      }, true);
+      document.addEventListener('pointerdown', function(e) {
+        if (!_agOverlayVisible()) return;
+        var ov = document.getElementById('ag-ios-rec');
+        if (ov.contains(e.target)) e.stopPropagation();
+      }, true);
+    })();
+
     window.addEventListener('flutter-first-frame', function() {
       document.getElementById('splash').style.display = 'none';
     });
