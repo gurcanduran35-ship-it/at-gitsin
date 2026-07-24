@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <base href="/">
+  <base href="/at-gitsin/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -67,7 +67,7 @@
   <!-- ── Kritik kaynaklar ───────────────────────────────────────────────── -->
   <link rel="preload" href="main.dart.js" as="script" crossorigin>
   <link rel="preload" href="flutter_bootstrap.js" as="script" crossorigin>
-  <link rel="dns-prefetch" href="https://nfkaqklfjjapswwsaghz.supabase.co">
+  <link rel="dns-prefetch" href="https://kpbkluvvcupfafiiivcu.supabase.co">
   <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
 
   <!-- ── JSON-LD: WebApplication ────────────────────────────────────────── -->
@@ -290,16 +290,17 @@
     function atGitsinStartSpeech() {
       return new Promise(function(resolve) {
         var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { resolve(null); return; }
+        if (!SR) { _agLastError = 'SpeechRecognition API yok'; resolve(null); return; }
         _agSpeechRecognition = new SR();
         _agSpeechRecognition.lang = 'tr-TR';
         _agSpeechRecognition.continuous = false;
         _agSpeechRecognition.interimResults = false;
         _agSpeechRecognition.maxAlternatives = 3;
         var resolved = false;
-        function done(text) {
+        function done(text, err) {
           if (!resolved) {
             resolved = true;
+            if (err) _agLastError = err;
             _agSpeechRecognition = null;
             resolve(text && text.trim().length > 0 ? text.trim() : null);
           }
@@ -307,12 +308,20 @@
         _agSpeechRecognition.onresult = function(e) {
           var parts = [];
           for (var i = 0; i < e.results.length; i++) parts.push(e.results[i][0].transcript);
-          done(parts.join(' '));
+          done(parts.join(' '), null);
         };
-        _agSpeechRecognition.onerror = function(e) { console.warn('SR error:', e.error); done(null); };
-        _agSpeechRecognition.onend = function() { done(null); };
+        _agSpeechRecognition.onerror = function(e) {
+          console.warn('SR error:', e.error);
+          var msg = null;
+          if (e.error === 'not-allowed') msg = 'MIC_DENIED';
+          else if (e.error === 'no-speech') msg = 'NO_SPEECH';
+          else if (e.error === 'network') msg = 'NETWORK_ERROR';
+          else msg = 'SR_ERROR:' + e.error;
+          done(null, msg);
+        };
+        _agSpeechRecognition.onend = function() { done(null, null); };
         try { _agSpeechRecognition.start(); }
-        catch(e) { console.warn('SR start error:', e); done(null); }
+        catch(e) { console.warn('SR start error:', e); done(null, 'SR_START_FAILED:' + String(e)); }
       });
     }
 
@@ -422,8 +431,11 @@
         if (_agIOSAudioCtx.state === 'suspended') _agIOSAudioCtx.resume();
       } catch(e) { _agIOSAudioCtx = null; }
 
+      // İzin istenirken butonu devre dışı bırak (çift tık koruması)
+      document.getElementById('ag-ios-mic').disabled = true;
       document.getElementById('ag-ios-status').textContent = 'Mikrofon izni isteniyor...';
-      navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false }, video: false })
+      // Basit audio kısıtlaması — iOS uyumluluğu için minimal
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         .then(function(stream) {
           _agIOSStream = stream;
           _agIOSPCMBufs = [];
@@ -438,8 +450,12 @@
               _agIOSPCMBufs.push(new Float32Array(e.inputBuffer.getChannelData(0)));
             }
           };
+          // Hoparlörden ses çıkmaması için sıfır kazanç filtresiyle destination'a bağla
+          var silentSink = _agIOSAudioCtx.createGain();
+          silentSink.gain.value = 0;
           source.connect(_agIOSProcessor);
-          _agIOSProcessor.connect(_agIOSAudioCtx.destination);
+          _agIOSProcessor.connect(silentSink);
+          silentSink.connect(_agIOSAudioCtx.destination);
 
           _agIOSActive = true;
           document.getElementById('ag-ios-mic').textContent = '⏹';
