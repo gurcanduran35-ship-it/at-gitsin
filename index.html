@@ -372,15 +372,17 @@
       useMediaRecorder: false, mediaRecorder: null, chunks: [], mimeType: null
     };
 
+    var _agLastRecordInfo = '';
+    function atGitsinGetLastRecordInfo() { return _agLastRecordInfo; }
+
     function _agPickMime() {
       if (typeof MediaRecorder === 'undefined') return null;
-      var types = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', ''];
+      // Boş string fallback YOK — sadece gerçekten desteklenen MIME kullan
+      var types = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
       for (var i = 0; i < types.length; i++) {
-        try {
-          if (types[i] === '' || MediaRecorder.isTypeSupported(types[i])) return types[i];
-        } catch(e) {}
+        try { if (MediaRecorder.isTypeSupported(types[i])) return types[i]; } catch(e) {}
       }
-      return null;
+      return null; // Destekleyen MIME yok → ScriptProcessor fallback
     }
 
     function atGitsinStartIOSRecording() {
@@ -402,23 +404,24 @@
             var mime = _agPickMime();
             if (mime !== null) {
               try {
-                _agRec.mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-                _agRec.mimeType = _agRec.mediaRecorder.mimeType || 'audio/mp4';
+                _agRec.mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+                _agRec.mimeType = _agRec.mediaRecorder.mimeType || mime;
                 _agRec.chunks = [];
                 _agRec.mediaRecorder.ondataavailable = function(e) {
                   if (e.data && e.data.size > 0) _agRec.chunks.push(e.data);
                 };
-                _agRec.mediaRecorder.start(1000);
+                _agRec.mediaRecorder.start(500); // 500ms timeslice — iOS'ta 1000ms bazen ilk chunk'ı atlar
                 _agRec.useMediaRecorder = true;
                 _agRec.active = true;
+                _agLastRecordInfo = 'MR/' + _agRec.mimeType + '/started';
                 if (_agRec.audioCtx) { try { _agRec.audioCtx.close(); } catch(ex) {} _agRec.audioCtx = null; }
                 resolve('ok');
                 return;
-              } catch(e2) { console.warn('MediaRecorder başlatılamadı, fallback:', e2); }
+              } catch(e2) { console.warn('MediaRecorder başlatılamadı, fallback:', e2); _agLastRecordInfo = 'MR_FAIL:' + e2; }
             }
 
-            // ── ScriptProcessor fallback (eski iOS) ───────────────────────────
-            if (!_agRec.audioCtx) { resolve('error:NoAudioContext'); return; }
+            // ── ScriptProcessor fallback (eski iOS < 17) ─────────────────────
+            if (!_agRec.audioCtx) { _agLastRecordInfo = 'SP/NoCtx'; resolve('error:NoAudioContext'); return; }
             var doConnect = function() {
               var src = _agRec.audioCtx.createMediaStreamSource(stream);
               _agRec.processor = _agRec.audioCtx.createScriptProcessor(4096, 1, 1);
@@ -428,6 +431,7 @@
               var sink = _agRec.audioCtx.createGain(); sink.gain.value = 0;
               src.connect(_agRec.processor); _agRec.processor.connect(sink); sink.connect(_agRec.audioCtx.destination);
               _agRec.active = true;
+              _agLastRecordInfo = 'SP/started';
               resolve('ok');
             };
             if (_agRec.audioCtx.state === 'suspended') {
@@ -447,13 +451,19 @@
         if (_agRec.useMediaRecorder && _agRec.mediaRecorder) {
           // ── MediaRecorder yolu ────────────────────────────────────────────
           var mr = _agRec.mediaRecorder;
+          var mrMime = _agRec.mimeType || 'audio/mp4';
           mr.onstop = function() {
-            var chunks = _agRec.chunks; _agRec.chunks = [];
-            _agRec.mediaRecorder = null; _agRec.useMediaRecorder = false;
-            if (_agRec.stream) { _agRec.stream.getTracks().forEach(function(t){ t.stop(); }); _agRec.stream = null; }
-            if (!chunks.length) { resolve(''); return; }
-            var blob = new Blob(chunks, { type: _agRec.mimeType || 'audio/mp4' });
-            var r = new FileReader(); r.onloadend = function(){ resolve(r.result || ''); }; r.readAsDataURL(blob);
+            // iOS: onstop bazen son ondataavailable'dan önce gelir — 150ms bekle
+            setTimeout(function() {
+              var chunks = _agRec.chunks; _agRec.chunks = [];
+              _agRec.mediaRecorder = null; _agRec.useMediaRecorder = false;
+              if (_agRec.stream) { _agRec.stream.getTracks().forEach(function(t){ t.stop(); }); _agRec.stream = null; }
+              var totalBytes = chunks.reduce(function(s, c) { return s + c.size; }, 0);
+              _agLastRecordInfo = 'MR/' + mrMime + '/' + chunks.length + 'ch/' + totalBytes + 'B';
+              if (!chunks.length) { resolve(''); return; }
+              var blob = new Blob(chunks, { type: mrMime });
+              var r = new FileReader(); r.onloadend = function(){ resolve(r.result || ''); }; r.readAsDataURL(blob);
+            }, 150);
           };
           try { mr.requestData(); } catch(e) {}
           setTimeout(function() { if (mr.state !== 'inactive') { try { mr.stop(); } catch(e) {} } }, 200);
@@ -464,6 +474,7 @@
           if (_agRec.stream)    { _agRec.stream.getTracks().forEach(function(t){ t.stop(); }); _agRec.stream = null; }
           var bufs = _agRec.pcmBufs; _agRec.pcmBufs = [];
           var total = 0; bufs.forEach(function(b){ total += b.length; });
+          _agLastRecordInfo = 'SP/' + total + 'smp';
           if (total < 8820) { resolve(''); return; }
           var pcm = new Float32Array(total); var off = 0;
           bufs.forEach(function(b){ pcm.set(b, off); off += b.length; });
