@@ -389,20 +389,26 @@
       return new Promise(function(resolve) {
         _agRec.active = false; _agRec.pcmBufs = []; _agRec.chunks = [];
         _agRec.useMediaRecorder = false; _agRec.mediaRecorder = null; _agRec.mimeType = null;
+        _agRec.audioCtx = null;
 
-        // AudioContext'i gesture sırasında oluştur (ScriptProcessor fallback için gerekli)
-        try {
-          _agRec.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          _agRec.sr = _agRec.audioCtx.sampleRate;
-        } catch(e) { _agRec.audioCtx = null; }
+        // MediaRecorder desteğini ÖNCE kontrol et
+        var mime = _agPickMime();
+
+        // AudioContext SADECE ScriptProcessor gerekince oluştur (gesture içinde)
+        // MediaRecorder kullanılacaksa AudioContext AÇMA — iOS mikrofonu AudioContext'e yönlendirir, MediaRecorder sessiz kalır
+        if (mime === null) {
+          try {
+            _agRec.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            _agRec.sr = _agRec.audioCtx.sampleRate;
+          } catch(e) { _agRec.audioCtx = null; }
+        }
 
         navigator.mediaDevices.getUserMedia({ audio: true, video: false })
           .then(function(stream) {
             _agRec.stream = stream;
 
-            // ── MediaRecorder yolu (iOS 17+, Chrome, Firefox) ─────────────────
-            var mime = _agPickMime();
             if (mime !== null) {
+              // ── MediaRecorder yolu (iOS 17+) — AudioContext YOK, çakışma olmaz ───
               try {
                 _agRec.mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
                 _agRec.mimeType = _agRec.mediaRecorder.mimeType || mime;
@@ -410,14 +416,13 @@
                 _agRec.mediaRecorder.ondataavailable = function(e) {
                   if (e.data && e.data.size > 0) _agRec.chunks.push(e.data);
                 };
-                _agRec.mediaRecorder.start(); // Timeslice YOK — iOS tek seferde geçerli MP4 üretir; timeslice ile fragmented MP4 Whisper'ı bozuyor
+                _agRec.mediaRecorder.start();
                 _agRec.useMediaRecorder = true;
                 _agRec.active = true;
                 _agLastRecordInfo = 'MR/' + _agRec.mimeType + '/started';
-                if (_agRec.audioCtx) { try { _agRec.audioCtx.close(); } catch(ex) {} _agRec.audioCtx = null; }
                 resolve('ok');
                 return;
-              } catch(e2) { console.warn('MediaRecorder başlatılamadı, fallback:', e2); _agLastRecordInfo = 'MR_FAIL:' + e2; }
+              } catch(e2) { console.warn('MediaRecorder başlatılamadı:', e2); _agLastRecordInfo = 'MR_FAIL:' + e2; }
             }
 
             // ── ScriptProcessor fallback (eski iOS < 17) ─────────────────────
