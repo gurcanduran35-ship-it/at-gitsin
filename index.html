@@ -410,7 +410,7 @@
                 _agRec.mediaRecorder.ondataavailable = function(e) {
                   if (e.data && e.data.size > 0) _agRec.chunks.push(e.data);
                 };
-                _agRec.mediaRecorder.start(500); // 500ms timeslice — iOS'ta 1000ms bazen ilk chunk'ı atlar
+                _agRec.mediaRecorder.start(); // Timeslice YOK — iOS tek seferde geçerli MP4 üretir; timeslice ile fragmented MP4 Whisper'ı bozuyor
                 _agRec.useMediaRecorder = true;
                 _agRec.active = true;
                 _agLastRecordInfo = 'MR/' + _agRec.mimeType + '/started';
@@ -452,8 +452,12 @@
           // ── MediaRecorder yolu ────────────────────────────────────────────
           var mr = _agRec.mediaRecorder;
           var mrMime = _agRec.mimeType || 'audio/mp4';
+          mr.ondataavailable = function(e) {
+            // stop() sonrası gelen tek büyük chunk (timeslice yok)
+            if (e.data && e.data.size > 0) _agRec.chunks.push(e.data);
+          };
           mr.onstop = function() {
-            // iOS: onstop bazen son ondataavailable'dan önce gelir — 150ms bekle
+            // ondataavailable ile onstop arasında kısa gecikme olabilir — 100ms bekle
             setTimeout(function() {
               var chunks = _agRec.chunks; _agRec.chunks = [];
               _agRec.mediaRecorder = null; _agRec.useMediaRecorder = false;
@@ -463,10 +467,10 @@
               if (!chunks.length) { resolve(''); return; }
               var blob = new Blob(chunks, { type: mrMime });
               var r = new FileReader(); r.onloadend = function(){ resolve(r.result || ''); }; r.readAsDataURL(blob);
-            }, 150);
+            }, 100);
           };
-          try { mr.requestData(); } catch(e) {}
-          setTimeout(function() { if (mr.state !== 'inactive') { try { mr.stop(); } catch(e) {} } }, 200);
+          // Timeslice yok: sadece stop() çağır, iOS tüm veriyi ondataavailable ile verir
+          if (mr.state !== 'inactive') { try { mr.stop(); } catch(e) {} }
         } else {
           // ── ScriptProcessor yolu ──────────────────────────────────────────
           if (_agRec.processor) { try { _agRec.processor.disconnect(); } catch(e) {} _agRec.processor = null; }
