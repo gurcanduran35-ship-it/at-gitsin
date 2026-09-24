@@ -650,6 +650,58 @@
       for(var i=0;i<n;i++){var v=Math.max(-1,Math.min(1,pcm[i]));dv.setInt16(44+i*2,v<0?v*0x8000:v*0x7FFF,true);}
       return new Blob([dv],{type:'audio/wav'});
     }
+
+    // ── Uygulama kapalıyken bildirim (Web Push) ──────────────────────────────
+    // Durum: 'unsupported' | 'ios-needs-install' | 'default' | 'granted' | 'denied'
+    function atGitsinPushState() {
+      var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+      if (!supported) {
+        // iPhone'da push sadece "Ana Ekrana Ekle" ile açılan uygulamada var (iOS 16.4+)
+        return (atGitsinIsIOS() && !atGitsinIsStandalone()) ? 'ios-needs-install' : 'unsupported';
+      }
+      return Notification.permission;
+    }
+
+    function _agB64ToBytes(b64) {
+      var pad = '='.repeat((4 - b64.length % 4) % 4);
+      var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+      var out = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+
+    async function _agPushSubscribe(vapidKey) {
+      await navigator.serviceWorker.register('push-sw.js', { scope: '/' });
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: _agB64ToBytes(vapidKey),
+        });
+      }
+      return JSON.stringify(sub);
+    }
+
+    // Kullanıcı butona bastığında çağrılır (izin penceresi gesture içinde açılmalı).
+    // Başarılıysa abonelik JSON'u, değilse '' döner.
+    async function atGitsinEnablePush(vapidKey) {
+      try {
+        var perm = await Notification.requestPermission();
+        if (perm !== 'granted') { _agLastError = 'PUSH_' + perm; return ''; }
+        return await _agPushSubscribe(vapidKey);
+      } catch (e) {
+        _agLastError = 'PUSH_ERR:' + e; console.warn('push', e); return '';
+      }
+    }
+
+    // Açılışta: izin zaten verilmişse aboneliği sessizce tazele (izin penceresi açmaz).
+    async function atGitsinRefreshPush(vapidKey) {
+      try {
+        if (atGitsinPushState() !== 'granted') return '';
+        return await _agPushSubscribe(vapidKey);
+      } catch (e) { return ''; }
+    }
   </script>
 </body>
 </html>
