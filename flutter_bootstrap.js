@@ -36,6 +36,16 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"59aa584fdf100e6c78c785d8a5b565d1de4b48ab","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"}]};
 
 
+// Önbellek kırma: tools/deploy.ps1 20260924145059 yerine derleme numarasını yazar.
+// Böylece her yayında main.dart.js yeni bir adresten iner, tarayıcı eskisini kullanamaz.
+(function () {
+  var v = '20260924145059';
+  if (v.indexOf('BUILD_ID') !== -1) return; // yerel derlemede dokunma
+  _flutter.buildConfig.builds.forEach(function (b) {
+    if (b.mainJsPath) b.mainJsPath = b.mainJsPath + '?v=' + v;
+  });
+})();
+
 // Flutter'ın (kullanımdan kalkmış) service worker'ı KAPALI: aynı kapsamda (/) çalışan
 // push-sw.js'in yerine geçip kendini silerek bildirim aboneliklerini bozuyordu.
 _flutter.loader.load();
