@@ -36,10 +36,10 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"59aa584fdf100e6c78c785d8a5b565d1de4b48ab","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"}]};
 
 
-// Önbellek kırma: tools/deploy.ps1 20260924153300 yerine derleme numarasını yazar.
+// Önbellek kırma: tools/deploy.ps1 20260924153652 yerine derleme numarasını yazar.
 // Böylece her yayında main.dart.js yeni bir adresten iner, tarayıcı eskisini kullanamaz.
 (function () {
-  var v = '20260924153300';
+  var v = '20260924153652';
   if (v.indexOf('BUILD_ID') !== -1) return; // yerel derlemede dokunma
   _flutter.buildConfig.builds.forEach(function (b) {
     if (b.mainJsPath) b.mainJsPath = b.mainJsPath + '?v=' + v;
