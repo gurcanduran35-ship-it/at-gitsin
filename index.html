@@ -174,35 +174,165 @@
   }
   </script>
 
+  <link rel="preload" as="image" href="icons/Icon-512.png">
   <style>
     body {
       margin: 0;
-      background-color: #1A3A5C;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: #0B1826;
       height: 100vh;
     }
-    #splash {
-      text-align: center;
-      color: white;
-      font-family: sans-serif;
-    }
-    #splash p {
-      font-size: 14px;
-      opacity: 0.6;
-      margin-top: 12px;
-    }
     #flutter_target { display: none; }
+
+    /* ── Açılış ekranı ─────────────────────────────────────────── */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(120% 80% at 50% 38%, #1E4468 0%, #12283F 45%, #0B1826 100%);
+      transition: opacity .45s ease, visibility .45s ease;
+    }
+    #splash.hide { opacity: 0; visibility: hidden; }
+    /* Arka plan: silik harita rotaları */
+    #splash .routes { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; }
+    #splash .routes path { stroke-dasharray: 4 7; animation: ag-route 14s linear infinite; }
+    @keyframes ag-route { to { stroke-dashoffset: -220; } }
+    /* Kenar karartma (premium derinlik) */
+    #splash::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(90% 70% at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%);
+    }
+
+    /* Gümüş çerçeveli logo kartı */
+    .ag-badge {
+      position: relative; z-index: 1;
+      width: 132px; height: 132px; border-radius: 34px; padding: 5px;
+      background: linear-gradient(145deg, #F4F6F8 0%, #AEB6BF 38%, #E9ECEF 55%, #8C96A1 100%);
+      box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08), 0 0 60px rgba(120,170,220,.18);
+      animation: ag-rise .8s cubic-bezier(.2,.8,.2,1) both;
+      overflow: hidden;
+    }
+    .ag-badge img {
+      width: 100%; height: 100%; display: block; border-radius: 29px; background: #fff; object-fit: cover;
+    }
+    /* Gümüş çerçeve üzerinden geçen ışık */
+    .ag-badge::after {
+      content: ''; position: absolute; top: -40%; left: -60%; width: 40%; height: 180%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+      transform: rotate(18deg);
+      animation: ag-shine 3.2s ease-in-out 1s infinite;
+    }
+    @keyframes ag-shine { 0% { left: -60%; } 45%, 100% { left: 140%; } }
+    @keyframes ag-rise { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
+
+    .ag-title {
+      position: relative; z-index: 1; margin: 22px 0 4px;
+      font-size: 26px; font-weight: 800; letter-spacing: 5px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C9D1D9 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-shadow: 0 2px 12px rgba(0,0,0,.35);
+      animation: ag-rise .8s .12s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .ag-sub {
+      position: relative; z-index: 1; margin: 0;
+      font-size: 13px; letter-spacing: .4px; color: rgba(214,224,234,.62);
+      animation: ag-rise .8s .22s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    /* Yükleniyor: yolda ilerleyen at taşıma aracı */
+    .ag-road {
+      position: relative; z-index: 1; width: 260px; height: 52px; margin-top: 40px;
+      animation: ag-rise .8s .32s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .ag-road .lane {
+      position: absolute; left: 0; right: 0; bottom: 4px; height: 2px;
+      background: repeating-linear-gradient(90deg, rgba(200,210,220,.45) 0 12px, transparent 12px 22px);
+      background-size: 22px 2px;
+      animation: ag-lane .6s linear infinite;
+      -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+              mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    }
+    @keyframes ag-lane { to { background-position: -22px 0; } }
+    .ag-road svg {
+      position: absolute; bottom: 5px; left: 0; width: 104px; height: 42px;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,.45));
+      animation: ag-drive 2.6s cubic-bezier(.45,.05,.55,.95) infinite;
+    }
+    @keyframes ag-drive {
+      0%   { transform: translateX(-10px); opacity: 0; }
+      12%  { opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translateX(170px); opacity: 0; }
+    }
+    .ag-road .wheel { animation: ag-bounce .3s ease-in-out infinite alternate; transform-origin: center; }
+    @keyframes ag-bounce { to { transform: translateY(-.6px); } }
+
+    .ag-loading {
+      position: relative; z-index: 1; margin-top: 12px;
+      font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(214,224,234,.55);
+    }
+    .ag-loading i { font-style: normal; animation: ag-dot 1.2s infinite; opacity: 0; }
+    .ag-loading i:nth-child(2) { animation-delay: .2s; }
+    .ag-loading i:nth-child(3) { animation-delay: .4s; }
+    @keyframes ag-dot { 30%, 70% { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #splash *, #splash::after { animation: none !important; }
+    }
   </style>
 </head>
 <body>
-  <div id="splash">
-    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-      <rect width="80" height="80" rx="16" fill="#F97316"/>
-      <text x="40" y="52" text-anchor="middle" font-size="36" fill="white">🐴</text>
+  <div id="splash" role="status" aria-label="At Gitsin yükleniyor">
+    <!-- Arka plan: Türkiye haritası gibi silik rotalar ve şehir noktaları -->
+    <svg class="routes" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="rgba(190,205,220,.22)" stroke-width="1.4" stroke-linecap="round">
+        <path d="M-20 190 C 80 150, 150 240, 250 200 S 380 130, 430 170"/>
+        <path d="M-20 610 C 90 560, 170 660, 260 600 S 360 540, 430 580"/>
+        <path d="M60 -20 C 20 120, 140 220, 90 360 S 60 560, 130 820"/>
+        <path d="M330 -20 C 380 140, 280 260, 320 420 S 380 620, 300 820"/>
+      </g>
+      <g fill="rgba(210,222,235,.35)">
+        <circle cx="250" cy="200" r="3"/><circle cx="90" cy="360" r="3"/>
+        <circle cx="320" cy="420" r="3"/><circle cx="260" cy="600" r="3"/>
+        <circle cx="130" cy="700" r="2.5"/><circle cx="60" cy="180" r="2.5"/>
+      </g>
     </svg>
-    <p>At Gitsin yükleniyor...</p>
+
+    <div class="ag-badge"><img src="icons/Icon-512.png" alt="At Gitsin"></div>
+    <div class="ag-title">AT GİTSİN</div>
+    <p class="ag-sub">Atını taşıt, aracını doldur</p>
+
+    <div class="ag-road" aria-hidden="true">
+      <!-- At taşıma aracı: çekici + at römorku (gümüş, turuncu şerit) -->
+      <svg viewBox="0 0 84 34">
+        <defs>
+          <linearGradient id="agSilver" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F3F5F7"/><stop offset=".55" stop-color="#B9C1CA"/><stop offset="1" stop-color="#8A949F"/>
+          </linearGradient>
+        </defs>
+        <!-- römork (at kutusu) -->
+        <rect x="1" y="4" width="52" height="21" rx="4" fill="url(#agSilver)"/>
+        <rect x="1" y="17" width="52" height="2.4" fill="#F97316"/>
+        <rect x="8" y="8" width="11" height="6" rx="1.5" fill="#23384F"/>
+        <rect x="23" y="8" width="11" height="6" rx="1.5" fill="#23384F"/>
+        <!-- pencereden bakan at başı -->
+        <path d="M26 13.5 l2-3.2 1.2 1 2.6-1.8 .6 1.4 -1.8 2.6z" fill="#C9A27A"/>
+        <!-- bağlantı -->
+        <rect x="52" y="20" width="6" height="2" fill="#6B7580"/>
+        <!-- çekici -->
+        <path d="M57 25 V12 a3 3 0 0 1 3-3 h11 l7 7 v9 z" fill="url(#agSilver)"/>
+        <path d="M66 11 h4.6 l5 5 H66 z" fill="#23384F"/>
+        <rect x="57" y="21" width="21" height="2" fill="#F97316"/>
+        <!-- tekerler -->
+        <g class="wheel" fill="#1B2733" stroke="#C3CAD2" stroke-width="1.4">
+          <circle cx="13" cy="27" r="4.2"/><circle cx="41" cy="27" r="4.2"/><circle cx="72" cy="27" r="4.2"/>
+        </g>
+      </svg>
+      <div class="lane"></div>
+    </div>
+    <div class="ag-loading">Yükleniyor<i>.</i><i>.</i><i>.</i></div>
   </div>
   <div id="flutter_target"></div>
   <div id="ag-ios-rec" style="display:none; position:fixed; inset:0; background:rgba(13,51,32,0.97); z-index:2147483647; flex-direction:column; align-items:center; justify-content:center; gap:16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent;">
@@ -212,7 +342,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20260924153652" async></script>
+  <script src="flutter_bootstrap.js?v=20260928130207" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -250,7 +380,10 @@
     })();
 
     window.addEventListener('flutter-first-frame', function() {
-      document.getElementById('splash').style.display = 'none';
+      // Yumuşak sönme, sonra DOM'dan kaldır
+      var s = document.getElementById('splash');
+      s.classList.add('hide');
+      setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 600);
     });
     var _audioCtx = null;
     function playNotificationBeep() {
