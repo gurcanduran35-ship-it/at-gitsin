@@ -346,7 +346,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20260929135732" async></script>
+  <script src="flutter_bootstrap.js?v=20260929141839" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -389,11 +389,70 @@
       s.classList.add('hide');
       setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 600);
     });
-    var _audioCtx = null;
-    function playNotificationBeep() {
+    // Bildirim bip sesi. ÖNEMLİ (iPhone): açık kalan bir AudioContext mikrofonu kendine
+    // yönlendirir ve MediaRecorder SESSİZ kayıt yapar ("ses anlaşılamadı"). Bu yüzden her bip
+    // kendi bağlamını açar ve bitince KAPATIR; kayıt sürerken bip hiç çalmaz.
+    // ── İlanı sesli dinleme (cihazın kendi Türkçe sesi, ücretsiz) ──
+    var _agTtsToken = 0;
+    function _agPickTrVoice() {
       try {
-        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        var ctx = _audioCtx;
+        var vs = (window.speechSynthesis.getVoices() || []).filter(function (v) {
+          return (v.lang || '').toLowerCase().replace('_', '-').indexOf('tr') === 0;
+        });
+        if (!vs.length) return null;
+        // Doğal/online sesler daha az robotik: önce onları seç
+        var pref = ['natural', 'online', 'neural', 'google', 'yelda', 'emel', 'ahmet'];
+        for (var i = 0; i < pref.length; i++) {
+          for (var j = 0; j < vs.length; j++) {
+            if ((vs[j].name || '').toLowerCase().indexOf(pref[i]) >= 0) return vs[j];
+          }
+        }
+        return vs[0];
+      } catch (e) { return null; }
+    }
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function () {}; } catch (e) {}
+    }
+    function atGitsinSpeak(text, onDone) {
+      var done = function () { try { if (onDone) onDone(); } catch (e) {} };
+      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) { done(); return false; }
+      var synth = window.speechSynthesis;
+      synth.cancel();
+      var token = ++_agTtsToken;
+      // Chrome uzun metni ~15 sn sonra kesiyor → cümle cümle sırayla oku
+      var parts = String(text).split(/(?<=[.!?])\s+/).filter(function (s) { return s.trim().length; });
+      var voice = _agPickTrVoice();
+      var idx = 0;
+      var next = function () {
+        if (token !== _agTtsToken) return;
+        if (idx >= parts.length) { done(); return; }
+        var u = new SpeechSynthesisUtterance(parts[idx++]);
+        u.lang = 'tr-TR';
+        if (voice) u.voice = voice;
+        u.rate = 0.95;
+        u.onend = next;
+        u.onerror = function () { if (token === _agTtsToken) { _agTtsToken++; done(); } };
+        synth.speak(u);
+      };
+      next();
+      return true;
+    }
+    function atGitsinStopSpeak() {
+      _agTtsToken++;
+      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    var _audioCtx = null;
+    var _agRecordingActive = false;
+    function _agCloseBeepCtx() {
+      if (_audioCtx) { try { _audioCtx.close(); } catch (e) {} _audioCtx = null; }
+    }
+    function playNotificationBeep() {
+      if (_agRecordingActive) return;
+      try {
+        _agCloseBeepCtx();
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        _audioCtx = ctx;
         var resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
         resume.then(function() {
           var osc = ctx.createOscillator();
@@ -405,6 +464,7 @@
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
           osc.start();
           osc.stop(ctx.currentTime + 0.8);
+          osc.onended = function () { if (_audioCtx === ctx) _agCloseBeepCtx(); };
         });
       } catch(e) {}
     }
@@ -524,6 +584,9 @@
 
     function atGitsinStartIOSRecording() {
       return new Promise(function(resolve) {
+        // Açık kalmış bip bağlamı varsa kapat (iPhone'da kaydı sessizleştirir), kayıt boyunca bip yok
+        _agCloseBeepCtx();
+        _agRecordingActive = true;
         _agRec.active = false; _agRec.pcmBufs = []; _agRec.chunks = [];
         _agRec.useMediaRecorder = false; _agRec.mediaRecorder = null; _agRec.mimeType = null;
         _agRec.audioCtx = null;
@@ -589,6 +652,7 @@
 
     function atGitsinStopIOSRecording() {
       return new Promise(function(resolve) {
+        _agRecordingActive = false;
         _agRec.active = false;
         if (_agRec.useMediaRecorder && _agRec.mediaRecorder) {
           // ── MediaRecorder yolu ────────────────────────────────────────────
@@ -631,6 +695,7 @@
     }
 
     function atGitsinCancelIOSRecording() {
+      _agRecordingActive = false;
       _agRec.active = false;
       if (_agRec.mediaRecorder && _agRec.mediaRecorder.state !== 'inactive') {
         try { _agRec.mediaRecorder.stop(); } catch(e) {}
