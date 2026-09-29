@@ -346,7 +346,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20260929141839" async></script>
+  <script src="flutter_bootstrap.js?v=20260929143452" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -401,7 +401,8 @@
         });
         if (!vs.length) return null;
         // Doğal/online sesler daha az robotik: önce onları seç
-        var pref = ['natural', 'online', 'neural', 'google', 'yelda', 'emel', 'ahmet'];
+        // iPhone: Ayarlar'dan indirilen "Gelişmiş/Premium" sesler; Edge: "Natural"; Chrome: "Google"
+        var pref = ['premium', 'enhanced', 'geliştirilmiş', 'gelişmiş', 'natural', 'online', 'neural', 'google', 'yelda', 'emel', 'ahmet'];
         for (var i = 0; i < pref.length; i++) {
           for (var j = 0; j < vs.length; j++) {
             if ((vs[j].name || '').toLowerCase().indexOf(pref[i]) >= 0) return vs[j];
