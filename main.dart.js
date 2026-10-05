@@ -9995,7 +9995,7 @@ return A.m(A.b47(n,A.a6(["Cache-Control","no-cache"],k,k)),$async$a20)
 case 7:m=b
 k=m
 l=B.c.ej(A.iJ(A.iG(k.e)).d3(k.w))
-if(m.b!==200||J.bV(l)===0||J.c(l,"20260929160045")){s=1
+if(m.b!==200||J.bV(l)===0||J.c(l,"20261005151814")){s=1
 break}if(new A.ba(Date.now(),0,!1).fB($.bf1()).a<15e6){v.G.atGitsinReload()
 s=1
 break}$.bab=!0

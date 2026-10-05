@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ses Denemesi</title>
+<style>
+  :root { --bg:#0E1A27; --card:#16263A; --text:#E8EEF5; --muted:#8FA3B8; --accent:#F08A45; --ok:#3CC486; --border:rgba(255,255,255,.12); }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; padding:16px; }
+  main { max-width:560px; margin:0 auto; }
+  h1 { font-size:20px; margin:8px 0 4px; }
+  p.lead { color:var(--muted); margin:0 0 16px; font-size:14px; }
+  textarea { width:100%; min-height:120px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:12px; font:inherit; font-size:14px; }
+  .opt { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:12px; display:flex; align-items:center; gap:12px; }
+  .opt .t { flex:1; }
+  .opt b { display:block; }
+  .opt small { color:var(--muted); display:block; font-size:12.5px; }
+  button { background:var(--accent); color:#1A1206; border:0; border-radius:999px; padding:10px 18px; font-weight:700; font-size:14px; cursor:pointer; min-width:96px; }
+  button:disabled { opacity:.5; }
+  .status { font-size:12.5px; color:var(--ok); margin-top:4px; min-height:1em; }
+  .note { margin-top:18px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ses Denemesi</h1>
+  <p class="lead">Aynı ilanı 4 farklı sesle dinleyin, hangisi en iyiyse söyleyin. (Bu sayfa sadece deneme içindir.)</p>
+  <textarea id="txt">Boş araç ilanı. Çıkış: Manisa. Varış: Antalya. At sayısı: 2. Tarih: 7 Ekim Salı, saat 09:30. İstenen ücret: 12500 lira. 3 teklif var. En düşük teklif: 11000 lira. İlan sahibi: Gürcan.</textarea>
+
+  <div class="opt">
+    <div class="t"><b>1. Telefonun kendi sesi</b><small>Şu an sitede kullanılan. İndirme yok.</small><div class="status" id="s0"></div></div>
+    <button id="b0">Dinle</button>
+  </div>
+  <div class="opt">
+    <div class="t"><b>2. Yapay zeka sesi: Dfki</b><small>İlk dinlemede ~63 MB iner (Wi-Fi önerilir), sonra hazır.</small><div class="status" id="s1"></div></div>
+    <button id="b1" data-voice="tr_TR-dfki-medium">Dinle</button>
+  </div>
+  <div class="opt">
+    <div class="t"><b>3. Yapay zeka sesi: Fahrettin</b><small>İlk dinlemede ~63 MB iner.</small><div class="status" id="s2"></div></div>
+    <button id="b2" data-voice="tr_TR-fahrettin-medium">Dinle</button>
+  </div>
+  <div class="opt">
+    <div class="t"><b>4. Yapay zeka sesi: Fettah</b><small>İlk dinlemede ~63 MB iner.</small><div class="status" id="s3"></div></div>
+    <button id="b3" data-voice="tr_TR-fettah-medium">Dinle</button>
+  </div>
+
+  <p class="note">Yapay zeka sesleri internete veri göndermez; ses telefonun içinde üretilir. Ücretsizdir.</p>
+</main>
+
+<script>
+  // 1) Cihaz sesi (sitedeki ile aynı seçim mantığı)
+  function pickTr() {
+    var vs = (speechSynthesis.getVoices() || []).filter(function (v) { return (v.lang || '').toLowerCase().indexOf('tr') === 0; });
+    var pref = ['premium', 'enhanced', 'geliştirilmiş', 'gelişmiş', 'natural', 'online', 'neural', 'google', 'yelda'];
+    for (var i = 0; i < pref.length; i++) for (var j = 0; j < vs.length; j++)
+      if ((vs[j].name || '').toLowerCase().indexOf(pref[i]) >= 0) return vs[j];
+    return vs[0] || null;
+  }
+  if (window.speechSynthesis) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () {}; }
+  document.getElementById('b0').onclick = function () {
+    var s0 = document.getElementById('s0');
+    if (!window.speechSynthesis) { s0.textContent = 'Bu tarayıcıda yok.'; return; }
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(document.getElementById('txt').value);
+    u.lang = 'tr-TR'; u.rate = 0.95;
+    var v = pickTr(); if (v) u.voice = v;
+    s0.textContent = 'Ses: ' + (v ? v.name : 'varsayılan');
+    speechSynthesis.speak(u);
+  };
+</script>
+<script type="module">
+  // 2-4) Piper (açık kaynak, tarayıcı içinde çalışan yapay zeka sesi)
+  let tts = null;
+  let current = null;
+  async function lib() {
+    if (!tts) tts = await import('https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm');
+    return tts;
+  }
+  for (const i of [1, 2, 3]) {
+    const btn = document.getElementById('b' + i);
+    const st = document.getElementById('s' + i);
+    btn.onclick = async () => {
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (current) { current.pause(); current = null; }
+      btn.disabled = true;
+      const t0 = performance.now();
+      try {
+        st.textContent = 'Hazırlanıyor…';
+        const t = await lib();
+        const wav = await t.predict(
+          { text: document.getElementById('txt').value, voiceId: btn.dataset.voice },
+          (p) => { if (p.total) st.textContent = 'İndiriliyor: %' + Math.round(p.loaded * 100 / p.total); }
+        );
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        st.textContent = 'Hazır (' + secs + ' sn). Çalıyor…';
+        current = new Audio(URL.createObjectURL(wav));
+        current.onended = () => { st.textContent = 'Bitti. Tekrar dinlemek anında olur.'; };
+        await current.play();
+      } catch (e) {
+        st.textContent = 'Hata: ' + (e && e.message ? e.message : e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  }
+</script>
+</body>
+</html>
