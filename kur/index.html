@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>At Gitsin'i Yükle</title>
+<meta name="description" content="At Gitsin'i telefonunuzun ana ekranına uygulama gibi ekleyin. Ücretsiz, mağazaya gerek yok.">
+<meta name="theme-color" content="#0E1A27">
+<!-- WhatsApp / sosyal medya önizlemesi -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://atgitsin.com.tr/kur/">
+<meta property="og:title" content="At Gitsin uygulamasını telefonuna ekle">
+<meta property="og:description" content="Tek dokunuşla ana ekranına ekle. Atını taşıt, aracını doldur — ücretsiz.">
+<meta property="og:image" content="https://atgitsin.com.tr/icons/Icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:locale" content="tr_TR">
+<!-- Ana ekrana eklenince uygulama gibi açılsın -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="At Gitsin">
+<link rel="apple-touch-icon" href="/icons/Icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/Icon-512.png">
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+  // Ana ekrandaki simgeden açıldıysa (kurulum bitti) doğrudan uygulamaya geç
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    location.replace('/');
+  }
+</script>
+<style>
+  :root {
+    --bg:#0E1A27; --card:#16263A; --card2:#1C3048; --text:#EAF0F6; --muted:#93A6BA;
+    --accent:#F08A45; --ok:#3CC486; --border:rgba(255,255,255,.12); --steel:#8FB3D9;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; }
+  body {
+    min-height:100vh; color:var(--text);
+    background:radial-gradient(120% 80% at 50% 0%, #1B3350 0%, var(--bg) 60%) fixed, var(--bg);
+    font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding:24px 16px calc(32px + env(safe-area-inset-bottom));
+  }
+  main { max-width:440px; margin:0 auto; }
+  .hero { text-align:center; margin:8px 0 22px; }
+  .logo {
+    width:88px; height:88px; border-radius:22px; display:block; margin:0 auto 14px;
+    box-shadow:0 0 0 2px rgba(220,230,240,.55), 0 10px 30px rgba(0,0,0,.45), 0 0 26px rgba(240,138,69,.25);
+  }
+  h1 { font-size:24px; margin:0 0 6px; letter-spacing:.2px; }
+  .sub { color:var(--muted); margin:0; font-size:15px; }
+  .perks { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0 0; padding:0; list-style:none; }
+  .perks li { font-size:12.5px; color:var(--steel); background:rgba(143,179,217,.1); border:1px solid rgba(143,179,217,.25); border-radius:999px; padding:4px 10px; }
+
+  .panel { background:linear-gradient(180deg, var(--card2), var(--card)); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(0,0,0,.35); }
+  .hidden { display:none !important; }
+
+  .btn {
+    display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+    border:0; border-radius:14px; padding:16px; font-size:17px; font-weight:800; cursor:pointer;
+    background:linear-gradient(135deg, #FFB074, var(--accent)); color:#1A1206;
+    box-shadow:0 8px 24px rgba(240,138,69,.35); text-decoration:none;
+  }
+  .btn.secondary { background:transparent; color:var(--text); border:1px solid var(--border); box-shadow:none; font-weight:700; font-size:15px; padding:13px; }
+  .btn + .btn { margin-top:10px; }
+  .note { color:var(--muted); font-size:13px; text-align:center; margin:12px 0 0; }
+
+  ol.steps { list-style:none; padding:0; margin:0; counter-reset:s; }
+  ol.steps li { counter-increment:s; display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--border); }
+  ol.steps li:last-child { border-bottom:0; padding-bottom:2px; }
+  ol.steps li::before {
+    content:counter(s); flex:0 0 30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(240,138,69,.16); color:var(--accent); font-weight:800; font-size:15px; margin-top:1px;
+  }
+  .st b { display:block; font-size:16px; }
+  .st span { color:var(--muted); font-size:13.5px; }
+  .ico { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; background:#2A4462; margin:0 2px; }
+  .ico svg { width:16px; height:16px; }
+  .pill { display:inline-block; background:#2A4462; border-radius:8px; padding:1px 8px; font-weight:700; color:var(--text); }
+
+  .done { text-align:center; }
+  .done .check { width:64px; height:64px; border-radius:50%; margin:4px auto 10px; display:flex; align-items:center; justify-content:center; background:rgba(60,196,134,.15); box-shadow:0 0 24px rgba(60,196,134,.35); }
+  .warn { background:rgba(245,185,74,.1); border:1px solid rgba(245,185,74,.4); border-radius:14px; padding:14px; margin-bottom:14px; font-size:14px; }
+  .warn b { color:#F5B94A; }
+
+  /* iPhone: alttaki Paylaş düğmesini gösteren zıplayan ok */
+  .pointer { position:fixed; left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:10;
+    display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--accent); font-weight:800; font-size:13px;
+    animation:bob 1.2s ease-in-out infinite; text-shadow:0 2px 8px rgba(0,0,0,.6); pointer-events:none; }
+  .pointer svg { width:34px; height:34px; filter:drop-shadow(0 0 8px rgba(240,138,69,.6)); }
+  @keyframes bob { 0%,100% { transform:translate(-50%,0); } 50% { transform:translate(-50%,8px); } }
+  @media (prefers-reduced-motion: reduce) { .pointer { animation:none; } }
+  .foot { text-align:center; margin-top:18px; }
+  .foot a { color:var(--steel); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <img class="logo" src="/icons/Icon-192.png" alt="At Gitsin" width="88" height="88">
+    <h1>At Gitsin'i telefonuna ekle</h1>
+    <p class="sub">Ana ekranında uygulama gibi dursun, tek dokunuşla aç.</p>
+    <ul class="perks"><li>Ücretsiz</li><li>Mağaza gerekmez</li><li>Yer kaplamaz</li><li>Bildirim alırsın</li></ul>
+  </div>
+
+  <!-- ANDROID / BİLGİSAYAR: tek dokunuşla yükleme -->
+  <section id="v-oneclick" class="panel hidden">
+    <button id="btn-install" class="btn" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Ana Ekrana Ekle
+    </button>
+    <p class="note">Açılan pencerede <span class="pill">Yükle</span> deyin. Hepsi bu.</p>
+  </section>
+
+  <!-- ANDROID: tarayıcı tek dokunuşu desteklemiyorsa (WhatsApp içi tarayıcı vb.) -->
+  <section id="v-android-manual" class="panel hidden">
+    <div id="android-inapp" class="warn hidden">
+      <b>Önce Chrome'da açın.</b> Bu sayfa başka bir uygulamanın (WhatsApp vb.) içinde açıldı; ana ekrana ekleme Chrome'da çalışır.
+      <a id="btn-open-chrome" class="btn" style="margin-top:12px" href="#">Chrome'da Aç</a>
+    </div>
+    <ol class="steps">
+      <li><div class="st"><b>Sağ üstteki <span class="ico"><svg viewBox="0 0 24 24" fill="#EAF0F6"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></span> menüye dokunun</b><span>Tarayıcının üç nokta menüsü</span></div></li>
+      <li><div class="st"><b><span class="pill">Ana ekrana ekle</span> veya <span class="pill">Uygulamayı yükle</span></b><span>Listede biraz aşağıda olabilir</span></div></li>
+      <li><div class="st"><b><span class="pill">Yükle</span> / <span class="pill">Ekle</span> deyin</b><span>At Gitsin simgesi ana ekranınıza gelir</span></div></li>
+    </ol>
+  </section>
+
+  <!-- iPHONE / iPAD -->
+  <section id="v-ios" class="panel hidden">
+    <div id="ios-inapp" class="warn hidden">
+      <b>Önce Safari'de açın.</b> Bu sayfa başka bir uygulamanın içinde açıldı; ana ekrana ekleme Safari'de çalışır.
+      <a id="btn-open-safari" class="btn" style="margin-top:12px" href="#">Safari'de Aç</a>
+      <button id="btn-copy" class="btn secondary" type="button">Linki Kopyala (Safari'ye yapıştırın)</button>
+    </div>
+    <ol class="steps">
+      <li><div class="st"><b><span id="ios-where">Alttaki</span> <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#5AA9FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M6 11H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span> Paylaş düğmesine dokunun</b><span>Görmüyorsanız önce <span class="pill">•••</span> düğmesine dokunun</span></div></li>
+      <li><div class="st"><b>Listeyi kaydırıp <span class="pill">Ana Ekrana Ekle</span> seçin</b><span>Simgesi: kare içinde artı <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#EAF0F6" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></span></div></li>
+      <li><div class="st"><b>Sağ üstte <span class="pill">Ekle</span> deyin</b><span>At Gitsin simgesi ana ekranınıza gelir, oradan açın</span></div></li>
+    </ol>
+  </section>
+
+  <!-- KURULDU -->
+  <section id="v-done" class="panel done hidden">
+    <div class="check"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#3CC486" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></div>
+    <h2 style="margin:0 0 6px;font-size:20px">Yüklendi!</h2>
+    <p class="sub">Ana ekranınızdaki <b>At Gitsin</b> simgesinden açabilirsiniz.</p>
+  </section>
+
+  <div class="foot"><a href="/">Yüklemeden siteyi kullan →</a></div>
+</main>
+
+<div id="ios-pointer" class="pointer hidden" aria-hidden="true">
+  <span>Paylaş</span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"/><path d="m6 14 6 6 6-6"/></svg>
+</div>
+
+<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isIPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  // Uygulama içi tarayıcılar (WhatsApp, Instagram, Facebook...)
+  var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|Snapchat|TikTok|wv\)/i.test(ua) ||
+              (isIOS && !/Safari\//.test(ua));
+  var isIOSSafari = isIOS && /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+  var here = 'https://atgitsin.com.tr/kur/';
+  function show(id) { document.getElementById(id).classList.remove('hidden'); }
+  function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+  var deferred = null;
+
+  if (isIOS) {
+    show('v-ios');
+    if (isIPad) document.getElementById('ios-where').textContent = 'Sağ üstteki';
+    if (inApp || !isIOSSafari) {
+      show('ios-inapp');
+      // iOS 17+: x-safari-https bağlantısı sayfayı doğrudan Safari'de açar
+      document.getElementById('btn-open-safari').href = 'x-safari-' + here;
+      document.getElementById('btn-copy').onclick = function () {
+        var b = this;
+        function ok() { b.textContent = 'Kopyalandı — Safari\'yi açıp adres çubuğuna yapıştırın'; }
+        if (navigator.clipboard) navigator.clipboard.writeText(here).then(ok, function () { prompt('Linki kopyalayın:', here); });
+        else prompt('Linki kopyalayın:', here);
+      };
+    } else if (!isIPad) {
+      show('ios-pointer');
+    }
+  } else {
+    // Android / bilgisayar: tarayıcı izin verirse tek dokunuş; vermezse elle adımlar
+    var manualTimer = setTimeout(function () {
+      if (deferred) return;
+      show('v-android-manual');
+      if (isAndroid && inApp) {
+        show('android-inapp');
+        document.getElementById('btn-open-chrome').href =
+          'intent://atgitsin.com.tr/kur/#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(here) + ';end';
+      }
+    }, 1500);
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferred = e;
+      clearTimeout(manualTimer);
+      hide('v-android-manual');
+      show('v-oneclick');
+    });
+    document.getElementById('btn-install').onclick = function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function (r) {
+        deferred = null;
+        if (r && r.outcome === 'accepted') { hide('v-oneclick'); show('v-done'); }
+      });
+    };
+    window.addEventListener('appinstalled', function () {
+      hide('v-oneclick'); hide('v-android-manual'); show('v-done');
+    });
+  }
+
+  // Bildirimler ve yükleme ölçütleri için uygulamanın servis çalışanını kaydet
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/push-sw.js', { scope: '/' }).catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
