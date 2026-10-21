@@ -348,7 +348,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20261021154039" async></script>
+  <script src="flutter_bootstrap.js?v=20261021161108" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -683,6 +683,30 @@
           img.src = url;
         };
         input.click();
+      });
+    }
+
+    // Profil fotoğrafı kırpma: kullanıcının çemberde seçtiği kare alanı (kaynak piksel)
+    // out×out JPEG'e çevirir. bytes: atGitsinPickImage'in döndürdüğü "full" JPEG.
+    function atGitsinCropJpeg(bytes, sx, sy, size, out, q) {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' }));
+        var img = new Image();
+        img.onload = function () {
+          var c = document.createElement('canvas');
+          c.width = out; c.height = out;
+          var x = c.getContext('2d');
+          x.fillStyle = '#ffffff'; x.fillRect(0, 0, out, out);
+          x.imageSmoothingQuality = 'high';
+          x.drawImage(img, sx, sy, size, size, 0, 0, out, out);
+          URL.revokeObjectURL(url);
+          c.toBlob(function (b) {
+            if (!b) { reject(new Error('blob')); return; }
+            b.arrayBuffer().then(function (ab) { resolve(new Uint8Array(ab)); }, reject);
+          }, 'image/jpeg', q);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('decode')); };
+        img.src = url;
       });
     }
 
