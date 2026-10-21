@@ -286,6 +286,8 @@
       #splash .routes path, .ag-badge::after { animation: none !important; }
     }
   </style>
+  <!-- Google ile giriş: resmi düğme (Google penceresinde site adresi atgitsin.com.tr görünür) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="splash" role="status" aria-label="At Gitsin yükleniyor">
@@ -346,7 +348,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20261019154717" async></script>
+  <script src="flutter_bootstrap.js?v=20261021144616" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -536,6 +538,56 @@
         try { _agSpeechRecognition.stop(); } catch(e) {}
         _agSpeechRecognition = null;
       }
+    }
+
+    // ── Google ile giriş: resmi Google düğmesi (Google Identity Services) ────
+    // Google penceresinde "atgitsin.com.tr" görünür. Dönen kimlik belgesi (ID token) Supabase'e
+    // tek kullanımlık rastgele bir kodla (nonce) birlikte verilir; böylece belge başka yerde kullanılamaz.
+    var AG_GOOGLE_CLIENT_ID = '108039440736-8sd5emvj3ivllq9svb0thbjkaefsuilr.apps.googleusercontent.com';
+    function atGitsinGisLoaded() {
+      return !!(window.google && google.accounts && google.accounts.id);
+    }
+    function _agRandomHex(n) {
+      var a = new Uint8Array(n); crypto.getRandomValues(a);
+      return Array.from(a).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    }
+    function _agSha256Hex(s) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (b) {
+        return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+      });
+    }
+    // Flutter'ın gömdüğü boş kutu (HtmlElementView için)
+    function atGitsinCreateDiv() {
+      var d = document.createElement('div');
+      d.style.width = '100%'; d.style.height = '100%';
+      d.style.display = 'flex'; d.style.justifyContent = 'center'; d.style.alignItems = 'center';
+      return d;
+    }
+    // mode: 'signin' | 'signup'; onCredential(idToken, rawNonce)
+    function atGitsinRenderGoogleButton(el, mode, width, onCredential) {
+      if (!atGitsinGisLoaded()) return false;
+      var raw = _agRandomHex(16);
+      _agSha256Hex(raw).then(function (hashed) {
+        google.accounts.id.initialize({
+          client_id: AG_GOOGLE_CLIENT_ID,
+          nonce: hashed,
+          ux_mode: 'popup',
+          auto_select: false,
+          itp_support: true,
+          callback: function (resp) {
+            if (resp && resp.credential) onCredential(resp.credential, raw);
+          }
+        });
+        setTimeout(function () {
+          el.innerHTML = '';
+          google.accounts.id.renderButton(el, {
+            type: 'standard', theme: 'outline', size: 'large', shape: 'rectangular',
+            text: mode === 'signup' ? 'signup_with' : 'continue_with',
+            locale: 'tr', logo_alignment: 'center', width: Math.max(200, Math.min(400, width))
+          });
+        }, 30);
+      });
+      return true;
     }
 
     // ── PWA Kurulum ──────────────────────────────────────────────────────────
