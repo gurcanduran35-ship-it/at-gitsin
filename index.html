@@ -7,6 +7,21 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- ── Güvenlik ──────────────────────────────────────────────────────────
+       Site GitHub Pages'te: sunucu güvenlik başlığı (X-Frame-Options, CSP) eklenemiyor.
+       1) Tıklama tuzağına (clickjacking) karşı: başka bir site At Gitsin'i gizli çerçeve içinde açarsa
+          sayfa kendini en üste taşır; taşıyamazsa hiç görünmez.
+       2) Başka sitelere giden bağlantılarda sadece alan adı gönderilir (sayfa adresi/parametreleri sızmaz). -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <style id="ag-antiframe">html { display: none !important; }</style>
+  <script>
+    if (window.self === window.top) {
+      var s = document.getElementById('ag-antiframe'); if (s) s.parentNode.removeChild(s);
+    } else {
+      try { window.top.location = window.self.location.href; } catch (e) { /* gizli kalır */ }
+    }
+  </script>
+
   <!-- ── Google Analytics 4 ──────────────────────────────────────────────── -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-9ZHTQK7TY7"></script>
   <script>
@@ -348,7 +363,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20261027160435" async></script>
+  <script src="flutter_bootstrap.js?v=20261102123553" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -1066,6 +1081,17 @@
       } catch (e) {
         _agLastError = 'PUSH_ERR:' + e; console.warn('push', e); return '';
       }
+    }
+
+    // Çıkışta: bu cihazın abonelik adresi (sunucudan bu hesaptan ayırmak için). Yoksa ''.
+    async function atGitsinPushEndpoint() {
+      try {
+        if (!('serviceWorker' in navigator)) return '';
+        var reg = await navigator.serviceWorker.getRegistration('/');
+        if (!reg || !reg.pushManager) return '';
+        var sub = await reg.pushManager.getSubscription();
+        return sub ? sub.endpoint : '';
+      } catch (e) { return ''; }
     }
 
     // Açılışta: izin zaten verilmişse aboneliği sessizce tazele (izin penceresi açmaz).
