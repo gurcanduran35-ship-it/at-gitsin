@@ -363,7 +363,7 @@
     <button id="ag-ios-mic" style="width:90px;height:90px;border-radius:50%;background:#E67E22;border:none;font-size:36px;cursor:pointer;box-shadow:0 4px 28px rgba(0,0,0,0.5);margin-top:8px;">🎤</button>
     <button id="ag-ios-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.65);padding:10px 32px;border-radius:24px;font-size:14px;cursor:pointer;margin-top:8px;">İptal</button>
   </div>
-  <script src="flutter_bootstrap.js?v=20261114161126" async></script>
+  <script src="flutter_bootstrap.js?v=20261114165308" async></script>
   <script>
     // ── iOS Overlay Touch Capture — Flutter'dan ÖNCE çalışır ─────────────────
     // flutter_bootstrap.js async olduğu için bu blok Flutter event listener'larından
@@ -611,15 +611,32 @@
       e.preventDefault();
       _pwaPrompt = e;
     });
+    // Kurulunca bu tarayıcıda hatırla (sekmede açılsa da üst çubuktaki kırmızı ok görünmesin)
+    window.addEventListener('appinstalled', function() {
+      _pwaPrompt = null;
+      try { localStorage.setItem('ag_installed', '1'); } catch (e) {}
+    });
     function atGitsinCanInstall() { return _pwaPrompt !== null; }
+    // Sonuç: 'accepted' | 'dismissed' | 'unavailable'
     function atGitsinShowInstall() {
-      if (!_pwaPrompt) return;
-      _pwaPrompt.prompt();
-      _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+      if (!_pwaPrompt) return Promise.resolve('unavailable');
+      var p = _pwaPrompt;
+      p.prompt();
+      return p.userChoice.then(function(c) {
+        _pwaPrompt = null;
+        if (c && c.outcome === 'accepted') { try { localStorage.setItem('ag_installed', '1'); } catch (e) {} }
+        return (c && c.outcome) || 'dismissed';
+      }, function() { return 'dismissed'; });
+    }
+    function atGitsinWasInstalled() {
+      try { return localStorage.getItem('ag_installed') === '1'; } catch (e) { return false; }
     }
     function atGitsinIsIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      // iPadOS 13+ kendini Mac gibi tanıtır: dokunmatik Mac = iPad
+      return (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     }
+    function atGitsinIsAndroid() { return /Android/i.test(navigator.userAgent); }
     function atGitsinIsStandalone() {
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     }
